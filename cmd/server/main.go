@@ -64,7 +64,9 @@ func run() error {
 	}
 	defer pool.Close()
 
-	ingestSvc := ingest.NewService(ingest.NewRepository(pool), cfg.DataDir, log)
+	dataDir := ingest.ResolveDataDir(cfg.DataDir, cfg.DataOverrideDir)
+	log.Info("data folder selected", "dir", dataDir, "override", dataDir == cfg.DataOverrideDir)
+	ingestSvc := ingest.NewService(ingest.NewRepository(pool), dataDir, log)
 	srv := &http.Server{
 		Addr:    cfg.HTTPAddr,
 		Handler: newRouter(cfg, log, pool, ingestSvc),

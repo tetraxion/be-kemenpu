@@ -53,7 +53,9 @@ func run(followUp bool) error {
 		return err
 	}
 
-	svc := ingest.NewService(ingest.NewRepository(pool), cfg.DataDir, log)
+	dataDir := ingest.ResolveDataDir(cfg.DataDir, cfg.DataOverrideDir)
+	log.Info("data folder selected", "dir", dataDir, "override", dataDir == cfg.DataOverrideDir)
+	svc := ingest.NewService(ingest.NewRepository(pool), dataDir, log)
 	return seed(ctx, svc, followUp)
 }
 
