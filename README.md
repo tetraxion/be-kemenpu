@@ -6,16 +6,16 @@ Stack: Go, Gin, pgx, PostgreSQL + PostGIS, golang-migrate, excelize.
 
 ## Run
 
-From the repo root (this is what the assignment's checker runs):
+From this folder:
 
 ```bash
-docker compose up --build
+make up                        # or: docker compose up --build -d
 ```
 
-The root `docker-compose.yml` only includes `backend/docker-compose.yml`, so the same command also works from this folder, as does `make up`.
+The backend and its database are their own Compose project, `be-irrigation`. The web interface is a separate project in `../frontend`; its gateway serves `http://localhost:8080` and forwards `/api`, `/swagger` and `/scalar` to the port published here.
 
-- API: `http://localhost:8080/api`
-- API documentation: `http://localhost:8080/swagger/index.html` (Swagger UI) and `http://localhost:8080/scalar` (Scalar)
+- API: `http://localhost:8081/api` directly, `http://localhost:8080/api` through the gateway
+- API documentation: `/swagger/index.html` (Swagger UI) and `/scalar` (Scalar), on either address
 - `GET /api/health` answers `{"status": "memuat"}` while the import runs, then `{"status": "siap"}`.
 - The source files are read from `data/` in this folder. Every start imports them from scratch.
 - `data/` at the repo root (`../data` from here) overrides it: when that folder holds at least one source file, the whole import comes from there. This is where the assignment's checker puts its own data set. The two folders are never mixed, and the startup log line `data folder selected` says which one was used.
@@ -194,8 +194,8 @@ Checked against the running service with the sample data.
 
 | # | Requirement | Status |
 | --- | --- | --- |
-| 1 | `docker compose up --build` from the repo root runs everything | Done for database and backend; the frontend is not built yet |
-| 2 | UI on `http://localhost:8080`, API on `/api` | API done; UI not built yet |
+| 1 | `docker compose up --build` from the repo root runs everything | **Not met as written.** Backend and frontend are two separate Compose projects by choice, each started from its own folder; there is no compose file at the repo root |
+| 2 | UI on `http://localhost:8080`, API on `/api` | Done once both projects run, through the gateway in `../frontend` |
 | 3 | Reads `./data` on start and imports automatically | Done. `./data` at the repo root is imported when it holds source files; otherwise the copy in `backend/data` is |
 | 4 | `GET /api/health`: `memuat`, then `siap` within 10 minutes | Done (a few seconds) |
 | 5 | `README.md` with run steps, assumptions, data problems, unfinished parts | Done (repo root) |
@@ -272,5 +272,5 @@ With the sample data the first call answers `14 / 6 / 3 / 2` (added, updated, ca
 
 ### Open points
 
-1. **Interface (part E)** is not built. `http://localhost:8080/` answers a small JSON index of the API instead of a web page.
+1. **Interface (part E)** lives in `../frontend`. When the backend runs on its own, `http://localhost:8080/` answers a small JSON index of the API instead of a web page.
 2. **Answer key.** The numbers were checked for internal consistency and against PostGIS, not against the checker's answer key, which is not available.

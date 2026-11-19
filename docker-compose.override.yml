@@ -1,7 +1,0 @@
-# Loaded automatically by `docker compose` and `make` in this folder, and not
-# by the root compose file. It publishes the API directly, for running the
-# backend without the gateway and the frontend.
-services:
-  backend:
-    ports:
-      - "${HTTP_PORT:-8080}:8080"
