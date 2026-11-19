@@ -1,6 +1,6 @@
 # Irrigation Server
 
-Backend of the *Kondisi Jaringan Irigasi* assignment. It imports the five source files in `data/` at the repo root, cleans them, derives the network analysis, and serves the API contract.
+Backend of the *Kondisi Jaringan Irigasi* assignment. It imports the five source files in `data/` (this folder), cleans them, derives the network analysis, and serves the API contract.
 
 Stack: Go, Gin, pgx, PostgreSQL + PostGIS, golang-migrate, excelize.
 
@@ -17,22 +17,23 @@ The root `docker-compose.yml` only includes `backend/docker-compose.yml`, so the
 - API: `http://localhost:8080/api`
 - API documentation: `http://localhost:8080/swagger/index.html` (Swagger UI) and `http://localhost:8080/scalar` (Scalar)
 - `GET /api/health` answers `{"status": "memuat"}` while the import runs, then `{"status": "siap"}`.
-- The source files are read from `data/` at the repo root (`../data` from this folder). Every start imports them from scratch.
+- The source files are read from `data/` in this folder. Every start imports them from scratch.
+- `data/` at the repo root (`../data` from here) overrides it: when that folder holds at least one source file, the whole import comes from there. This is where the assignment's checker puts its own data set. The two folders are never mixed, and the startup log line `data folder selected` says which one was used.
 
-No environment variable is required. `.env.example` lists the defaults; copy it to `.env` to change one, for example `HTTP_PORT` or `DATA_PATH`.
+No environment variable is required. `.env.example` lists the defaults; copy it to `.env` to change one, for example `HTTP_PORT` or `DATA_OVERRIDE_PATH`.
 
 ### Migrations and seeding
 
 The server applies pending migrations and imports the data folder by itself on every start, so neither command below is needed to run the application. They exist for working on the database separately.
 
 | Command | Binary | Does |
-|---|---|---|
+| --- | --- | --- |
 | `make migrate-up` | `cmd/migrate` | applies the migrations in `migrations/` |
 | `make migrate-down` | `cmd/migrate -down 1` | rolls back the last step |
 | `make seed` | `cmd/seed` | replaces the schema content with what the data folder describes |
 | `make seed ARGS="-follow-up"` | `cmd/seed -follow-up` | the same, then imports `laporan_susulan.xlsx` |
 
-The `make` targets run the binaries inside the backend image on the compose network, because the database port is not published to the host. With a PostgreSQL reachable from the host, `go run ./cmd/migrate` and `go run ./cmd/seed` work too, reading `DATABASE_URL` and `DATA_DIR` from the environment.
+The `make` targets run the binaries inside the backend image on the compose network, because the database port is not published to the host. With a PostgreSQL reachable from the host, `go run ./cmd/migrate` and `go run ./cmd/seed` work too, reading `DATABASE_URL`, `DATA_DIR` and `DATA_OVERRIDE_DIR` from the environment.
 
 There is no separate seed data: the only data of this application is the five source files. A running server re-imports them on its next start, which undoes a `-follow-up` seed.
 
@@ -41,7 +42,7 @@ There is no separate seed data: the only data of this application is the five so
 Every handler carries swaggo annotations; the specification is generated into `docs/` and compiled into the binary.
 
 | Address | Shows |
-|---|---|
+| --- | --- |
 | `/swagger/index.html` | Swagger UI, with "Try it out" |
 | `/scalar` | Scalar API Reference (loads its script from a CDN, so it needs internet access) |
 | `/swagger/doc.json` | The OpenAPI specification |
@@ -62,7 +63,7 @@ make run
 ### Commands
 
 | Command | Does |
-|---|---|
+| --- | --- |
 | `make up` | Build and start the stack in the background (`docker compose up -d --build --wait`) |
 | `make down` | Stop and remove the containers |
 | `make logs` | Follow the backend log |
@@ -82,7 +83,7 @@ make run
 ### Tests
 
 | Kind | Build tag | Covers |
-|---|---|---|
+| --- | --- | --- |
 | Unit | (none) | normalisation, projection, network graph, cleaning rules, services with a fake repository, the API contract through the router |
 | Integration | `integration` | migrations up → down → up, polygon repair in PostGIS, latest-condition and duplicate rules in SQL, the sample data end to end, follow-up import repeated |
 
@@ -96,7 +97,7 @@ docker rm -f irrigation-itest
 
 ## Layout
 
-```
+```text
 cmd/server/            wiring: startup, router, readiness gate
 cmd/migrate/           apply or roll back migrations
 cmd/seed/              fill the database from the data folder
@@ -109,7 +110,7 @@ docs/                  generated OpenAPI specification (swaggo)
 Files inside a feature follow `<f>.{domain,dto,service,repository,handler,route}.go`.
 
 | Layer | Responsibility |
-|---|---|
+| --- | --- |
 | `domain` | types, pure rules, repository interface, error codes |
 | `dto` | request and response types, conversions to the contract shape |
 | `handler` | bind the request, call the service, write the response |
@@ -117,7 +118,7 @@ Files inside a feature follow `<f>.{domain,dto,service,repository,handler,route}
 | `repository` | SQL and transactions |
 
 | Feature | Serves |
-|---|---|
+| --- | --- |
 | `ingest` | reading, cleaning, network analysis, follow-up import. The only feature that writes to the database |
 | `asset` | structures, report history, downstream impact, maintenance priority |
 | `canal` | canal length recap, canal map layer |
@@ -144,7 +145,7 @@ Every error answers the same envelope, with a stable `code` for clients and a `r
 ```
 
 | Status | Code | When |
-|---|---|---|
+| --- | --- | --- |
 | 400 | `ASSET_INVALID_KIND`, `ASSET_INVALID_CONDITION` | `jenis` or `kondisi` is not a known value. An unknown value is rejected instead of answering an empty list |
 | 400 | `ASSET_INVALID_LIMIT` | `limit` is not a positive integer. There is no upper bound: a large limit returns every row |
 | 404 | `ASSET_NOT_FOUND` | no structure with that `kode_aset` |
@@ -192,10 +193,10 @@ Checked against the running service with the sample data.
 ### Part A — minimum requirements
 
 | # | Requirement | Status |
-|---|---|---|
+| --- | --- | --- |
 | 1 | `docker compose up --build` from the repo root runs everything | Done for database and backend; the frontend is not built yet |
 | 2 | UI on `http://localhost:8080`, API on `/api` | API done; UI not built yet |
-| 3 | Reads `./data` on start and imports automatically | Done |
+| 3 | Reads `./data` on start and imports automatically | Done. `./data` at the repo root is imported when it holds source files; otherwise the copy in `backend/data` is |
 | 4 | `GET /api/health`: `memuat`, then `siap` within 10 minutes | Done (a few seconds) |
 | 5 | `README.md` with run steps, assumptions, data problems, unfinished parts | Done (repo root) |
 | 6 | `.env.example`; runs with its defaults | Done (`backend/.env.example`) |
@@ -203,7 +204,7 @@ Checked against the running service with the sample data.
 ### Part B — integration and cleaning
 
 | Rule | Status |
-|---|---|
+| --- | --- |
 | Nomenclature to `B.KW.1` / `B.KW.6A` | Done |
 | Condition to four canonical values | Done |
 | Dates to `YYYY-MM-DD`, ambiguous read day first | Done |
@@ -228,7 +229,7 @@ Checked against the running service with the sample data.
 ### Part C — API contract
 
 | Endpoint | Status |
-|---|---|
+| --- | --- |
 | `GET /api/health` | Done |
 | `GET /api/aset` with `jenis`, `kondisi`, `saluran` | Done |
 | `GET /api/aset/{kode_aset}` with `riwayat` (cancelled reports included) | Done |
@@ -241,7 +242,7 @@ Checked against the running service with the sample data.
 ### Part D — downstream impact and priority
 
 | Rule | Status |
-|---|---|
+| --- | --- |
 | Position = nearest point on a canal, within 50 m | Done |
 | Segment ends within 10 m are connected | Done |
 | Flow direction from the weir, not from the drawing direction | Done |
@@ -260,7 +261,7 @@ Not built.
 ### Part F — follow-up data
 
 | Rule | Status |
-|---|---|
+| --- | --- |
 | Imported only on `POST /api/impor/susulan` | Done |
 | New, updated and cancelled reports | Done |
 | Part B cleaning applies | Done |

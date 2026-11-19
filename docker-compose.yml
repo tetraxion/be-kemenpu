@@ -23,11 +23,12 @@ services:
       HTTP_ADDR: ":8080"
       DATABASE_URL: postgres://${POSTGRES_USER:-irigasi}:${POSTGRES_PASSWORD:-irigasi}@db:5432/${POSTGRES_DB:-irigasi}?sslmode=disable
       DATA_DIR: /data
+      DATA_OVERRIDE_DIR: /data-override
     volumes:
-      # The source files stay in data/ at the repo root: the assignment fixes
-      # that location and the checker replaces its content before starting.
-      # They are mounted, not baked into the image.
-      - ${DATA_PATH:-../data}:/data:ro
+      # The source files ship with this service. They are mounted, not baked
+      # into the image.
+      - ./data:/data:ro
+      - ${DATA_OVERRIDE_PATH:-../data}:/data-override:ro
     ports:
       - "${HTTP_PORT:-8080}:8080"
     depends_on:
