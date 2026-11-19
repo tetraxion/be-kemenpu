@@ -1,0 +1,62 @@
+kode_aset,nomenklatur,jenis,nama_saluran,x,y,kondisi,tahun_bangun,tgl_update
+KW-0019,BTS 1,Bangunan Sadap,Sekunder Tegal Sari,110.431368,-7.638081,rusak_ringan,1985,2024-05-28
+KW-0003," B-KW-2",Bangunan Bagi-Sadap,Primer Kali Wening,-7.640567,110.385810,rusak sedang,1994,31-12-2025
+KW-0032,B.SR.2b,Talang,Sekunder Sumber Rejo,110.393513,-7.611187,RR,1988,14/06/2025
+KW-0033,B.KW.6a,Gorong-gorong,Primer Kali Wening,110.432475,-7.650354,baik,2008,08-03-2026
+KW-0026,"b_wg_4 ",Bangunan Sadap,Sekunder Watu Gede,-7.684493,110.480951,RB,2007,2025-06-16
+KW-0018,B.KA.4,Bangunan Sadap,Sekunder Karang Anyar,"110,402958","-7,687024",baik,1996,28-02-2026
+KW-0021,B TS 3,BANGUNAN SADAP,Sekunder Tegal Sari,437888.80,9158071.62,baik,1985,26-01-2026
+KW-0010,b-sr-1,Bangunan Sadap,Sekunder Sumber Rejo,110.388492,-7.629791,BAIK,1992,2025/03/12
+KW-0019,b-ts-1,Bangunan Sadap,Sekunder Tegal Sari,110.431369,-7.638079,baik,1985,2025/04/24
+KW-0029,b_bu_2,Bangunan Sadap,Sekunder Banyu Urip,435527.67,9159219.21,baik,1977,2026-01-02
+KW-0036,b ka 3b,siphon,Sekunder Karang Anyar,110.403539,-7.683778,baik,1983,2026-08-13
+KW-0022,B.TS.4,Bangunan Sadap,Sekunder Tegal Sari,438119.50,9159173.55,rusak berat,1988,12/12/2025
+KW-0028,B-BU-1,Bangunan Sadap,Sekunder Banyu Urip,434369.90,9159087.92,RUSAK SEDANG,1996,07-11-2025
+KW-0011,B.SR.2,Bangunan Sadap,Sekunder Sumber Rejo,110.391290,-7.619658,b,1980,2024-12-25
+KW-0017,B-KA-3,Bangunan Sadap,Sekunder Karang Anyar,434319.98,9151377.46,rr,2005,2025/05/30
+KW-0038,"B_SR_3a ",Siphon,Sekunder Sumber Rejo,433286.03,9159506.67,baik,2000,6/1/2026
+KW-0023,BWG1,Bangunan Sadap,Sekunder Watu Gede,110.457875,-7.660974,RUSAK BERAT,1981,09/03/2025
+KW-0024,BWG 2,Bangunan Sadap,Sekunder Watu Gede,110.464693,-7.668581,RR,1999,31-07-2025
+KW-0013,B-SR-4,Bangunan Sadap,Sekunder Sumber Rejo,110.396184,-7.598688,Rusak Ringan,1981,1 Juli 2026
+KW-0047,B.WG.2a,Gorong-gorong,Sekunder Watu Gede,110.551535,-7.610826,RR,1993,01/02/2026
+KW-0042,B.BU.1a,GORONG-GORONG,Sekunder Banyu Urip,110.411283,-7.608015,rusak berat,1986,13-11-2025
+KW-0054,BKW5a,Terjunan,Primer Kali Wening,"110,425307","-7,648715",Baik,2007,2025-02-15
+KW-0015,b-ka-1,bangunan sadap,Sekunder Karang Anyar,434550.91,9153766.54,"rusak ringan ",2009,19/3/2026
+KW-0016,b_ka_2,Bangunan Sadap,Sekunder Karang Anyar,110.405397,-7.666079,BAIK,1986,28/09/2025
+KW-0049,bbu 2a,Terjunan,Sekunder Banyu Urip,-7.605769,110.420874,rusak ringan,1983,18/1/2025
+KW-0050,B TS 2a,Terjunan,Sekunder Tegal Sari,110.435839,-7.621714,RUSAK RINGAN,1992,2024-04-22
+KW-0011,b_sr_2,Bangunan Sadap,Sekunder Sumber Rejo,110.391288,-7.619658,rusak berat,1980,17-06-2025
+KW-0009,B.KW.8,Bangunan Bagi,Primer Kali Wening,439322.80,9153915.79,RS,2000,26/07/2025
+KW-0035,B KA 3a,Gorong-gorong,Sekunder Karang Anyar,"110,403987","-7,679534",b,1984,04-12-2025
+KW-0007,B KW 6,Bangunan Bagi-Sadap,Primer Kali Wening,110.428516,-7.649229,B,1981,19/3/2025
+KW-0002,bkw1,Bangunan Sadap,Primer Kali Wening,431075.61,9155613.88,Rusak-Berat,1977,2025/07/31
+KW-0020,B-TS-2,Bangunan Sadap,Sekunder Tegal Sari,"110,434843","-7,626830",Rusak Ringan,1978,2025-09-12
+KW-0053,"B-KA-2a ",Siphon,Sekunder Karang Anyar,110.405092,-7.669734,Baik,2011,2025-09-19
+KW-0001,B KW 0,Bendung,Primer Kali Wening,430002.82,9155998.98,RB,2009,23/1/2025
+KW-0034,b.kw.6b,Talang,Primer Kali Wening,110.436178,-7.651408,"BAIK ",2004,2/6/2026
+KW-0039,b_kw_1a,Talang,Primer Kali Wening,0,0,b,2008,2025-09-23
+KW-0048," B_WG_3A",Terjunan,Sekunder Watu Gede,-7.679562,110.475764,Baik,1990,12/11/2025
+KW-0012,B_SR_3,Bangunan Bagi-Sadap,Sekunder Sumber Rejo,"110,394067","-7,608396",rusak berat,1989,2025-10-02
+KW-0043,BKW 2A,Talang,Primer Kali Wening,110.393554,-7.640091,"baik ",1997,2025/01/16
+KW-0056,B-SR-4A,Terjunan,Sekunder Sumber Rejo,0,0,Rusak-Ringan,2006,16/01/2025
+KW-0051,B.SR.1a,Siphon,Sekunder Sumber Rejo,110.391792,-7.627381,B,1990,10 November 2025
+KW-0031,B.SR.2a,TALANG,Sekunder Sumber Rejo,106.827200,-6.175400,RB,1999,2025-07-14
+KW-0055,B-TS-3A,Terjunan,Sekunder Tegal Sari,,,B,1983,4/2/2025
+KW-0025,B.WG.3,Bangunan Sadap,Sekunder Watu Gede,110.472410,-7.676716,B,1996,4 Februari 2025
+KW-0050,B_TS_2a,Terjunan,Sekunder Tegal Sari,110.435839,-7.621715,RS,1992,2025/03/11
+KW-0008,bkw 7,Bangunan Sadap,Primer Kali Wening,"110,439190","-7,652247",rusak ringan,1999,15-03-2025
+KW-0046,B.WG.1a,Siphon,Sekunder Watu Gede,-7.664720,110.461262,"BAIK ",2000,13/11/2025
+KW-0040,"B.TS.1a ",Gorong-gorong,Sekunder Tegal Sari,437471.46,9156326.84,rusak_sedang,1998,2025-03-13
+KW-0005,B-KW-4,Bangunan Bagi-Sadap,Primer Kali Wening,-7.644827,110.407299,"BAIK ",2007,25/01/2025
+KW-0030,bbu3,Bangunan Sadap,Sekunder Banyu Urip,110.426222,-7.605608,BAIK,2000,2026-08-02
+KW-0027,bwg5,Bangunan Sadap,Sekunder Watu Gede,"110,488215","-7,692988",BAIK,1979,2025-09-24
+KW-0045,B.WG.4a,Gorong-gorong,Sekunder Watu Gede,110.484317,-7.688263,baik,1984,2026-08-06
+KW-0014,B.SR.5,Bangunan Sadap,Sekunder Sumber Rejo,"110,398279","-7,588575",rusak ringan,1978,2026-01-08
+KW-0052,bkw 3a,Terjunan,Primer Kali Wening,,,Rusak Ringan,1992,20-10-2025
+KW-0037,BKA1A,gorong-gorong,Sekunder Karang Anyar,110.407372,-7.661435,"rusak  berat ",1977,2025/03/23
+KW-0006,B.KW.5,Bangunan Sadap,Primer Kali Wening,110.418539,-7.647397,baik,2002,26-01-2025
+KW-0041,B.KW.7a,Talang,Primer Kali Wening,438747.54,9153992.34,B,2007,2025-11-08
+KW-0023,b wg 1,Bangunan Sadap,Sekunder Watu Gede,110.457874,-7.660977,RUSAK_RINGAN,1981,13/06/2024
+KW-0044,B.KW.4a,Gorong-gorong,Primer Kali Wening,110.412506,-7.646138,B,1982,2025-12-19
+KW-0004,B-KW-3,Bangunan Sadap,Primer Kali Wening,110.397223,-7.642453,b,2004,2025-10-22
+KW-0053,B.KA.2a,Siphon,Sekunder Karang Anyar,110.405095,-7.669735,baik,2011,2025-05-29
