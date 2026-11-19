@@ -15,10 +15,12 @@ func TestLoadRequiresDatabaseURL(t *testing.T) {
 }
 
 func TestLoadDefaults(t *testing.T) {
+	// Clear every variable the test reads a default for: `make test` exports
+	// the developer's .env, which would otherwise leak into the result.
+	for _, key := range []string{"APP_ENV", "HTTP_ADDR", "DOCS_ENABLED", "REQUEST_TIMEOUT", "DATABASE_WAIT", "DATA_DIR", "DATA_OVERRIDE_DIR"} {
+		t.Setenv(key, "")
+	}
 	t.Setenv("DATABASE_URL", "postgres://u:p@localhost:5432/db")
-	t.Setenv("HTTP_ADDR", "")
-	t.Setenv("DATA_DIR", "")
-	t.Setenv("DATA_OVERRIDE_DIR", "")
 	t.Setenv("SHUTDOWN_TIMEOUT", "not-a-duration")
 
 	cfg, err := Load()
