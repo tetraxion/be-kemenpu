@@ -223,8 +223,8 @@ func TestLatestConditionAndDuplicateRules(t *testing.T) {
 func TestSampleDataEndToEnd(t *testing.T) {
 	dataDir := os.Getenv("TEST_DATA_DIR")
 	if dataDir == "" {
-		// The data folder sits at the repo root, next to backend/.
-		dataDir = filepath.Join("..", "..", "..", "..", "data")
+		// backend/data, seen from internal/features/ingest.
+		dataDir = filepath.Join("..", "..", "..", "data")
 	}
 	if _, err := os.Stat(filepath.Join(dataDir, FileAssets)); err != nil {
 		t.Skipf("no data folder at %s", dataDir)
