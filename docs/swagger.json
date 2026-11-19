@@ -1,0 +1,889 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Combines the asset inventory, field reports and network map of an irrigation area into one picture of network condition, to help set maintenance priorities.",
+        "title": "Irrigation Network Condition API",
+        "contact": {},
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/api/aset": {
+            "get": {
+                "description": "Every structure with its latest condition. Filters accept the same spelling variants as the source files, so `RR` selects `rusak_ringan`. A structure without geometry has `lon` and `lat` set to null.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assets"
+                ],
+                "summary": "List irrigation structures",
+                "parameters": [
+                    {
+                        "enum": [
+                            "bendung",
+                            "bangunan_bagi",
+                            "bangunan_sadap",
+                            "bangunan_bagi_sadap",
+                            "bangunan_pelengkap"
+                        ],
+                        "type": "string",
+                        "description": "Structure type",
+                        "name": "jenis",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "baik",
+                            "rusak_ringan",
+                            "rusak_sedang",
+                            "rusak_berat"
+                        ],
+                        "type": "string",
+                        "description": "Latest condition",
+                        "name": "kondisi",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Canal name, case-insensitive",
+                        "name": "saluran",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/asset.ListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Unknown jenis or kondisi",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/aset/{kode_aset}": {
+            "get": {
+                "description": "`riwayat` holds every report matched to the structure, newest first, cancelled ones included. Reports dropped as duplicates are left out.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assets"
+                ],
+                "summary": "Get one structure with its report history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Asset code, e.g. KW-0012",
+                        "name": "kode_aset",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/asset.DetailResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/aset/{kode_aset}/dampak": {
+            "get": {
+                "description": "The tertiary plots that lose water when the structure fails: every plot whose water path from the weir passes through it, including plots tapped at the structure itself. A structure without geometry or flagged `jauh_dari_saluran` has an impacted area of 0.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assets"
+                ],
+                "summary": "Downstream impact of one structure",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Asset code, e.g. KW-0012",
+                        "name": "kode_aset",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/asset.ImpactResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/health": {
+            "get": {
+                "description": "`memuat` while the data folder is being imported, `siap` once it has finished. Always answers 200, because the checker polls it during the import. Every other endpoint answers 503 until the status is `siap`.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Import status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/health.StatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/impor/susulan": {
+            "post": {
+                "description": "Imports `laporan_susulan.xlsx` from the data folder: new reports are added, reports with a known `id_laporan` replace the stored one, and reports with status `batal` are cancelled. The latest condition and the priorities are recomputed. Safe to repeat: a second call reports every row as `tidak_berubah` and leaves the same state.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "import"
+                ],
+                "summary": "Import the follow-up reports",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ingest.FollowUpResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "The follow-up file is not in the data folder",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    },
+                    "422": {
+                        "description": "The follow-up file is not a readable workbook",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kualitas-data": {
+            "get": {
+                "description": "Counted per source row or feature that was repaired, flagged or dropped, across every imported file. The eleven categories required by the assignment are always present, with 0 when nothing was found; extra categories follow.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quality"
+                ],
+                "summary": "Number of data-quality findings per category",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/quality.SummaryResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kualitas-data/temuan": {
+            "get": {
+                "description": "Not part of the assignment contract; added for the data-quality page. One row per cleaning action: source file, row reference, problem and the action taken.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quality"
+                ],
+                "summary": "List data-quality findings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Finding category, e.g. aset_ganda",
+                        "name": "kategori",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/quality.FindingListResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/peta/petak": {
+            "get": {
+                "description": "Not part of the assignment contract; added for the map. Geometry is WGS84. Properties: `kode_petak`, `nama_petak`, `luas_ha`, `luas_baku_ha`, `luas_geometri_ha`, `nomenklatur_sadap`, `kode_aset_sadap`, `tanda`.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "map"
+                ],
+                "summary": "Tertiary plots as GeoJSON",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/geojson.FeatureCollection"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/peta/saluran": {
+            "get": {
+                "description": "Not part of the assignment contract; added for the map. Geometry is WGS84. Properties: `id_ruas`, `nama_saluran`, `tingkat`, `kondisi`, `panjang_m`.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "map"
+                ],
+                "summary": "Canal segments as GeoJSON",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/geojson.FeatureCollection"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/prioritas": {
+            "get": {
+                "description": "Score = condition weight (baik 0, rusak_ringan 1, rusak_sedang 2, rusak_berat 4) x impacted area. Only scores above 0 are listed, highest first; ties are ordered by `kode_aset`.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assets"
+                ],
+                "summary": "Maintenance priority list",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Maximum number of rows",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/asset.PriorityListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "limit is not a positive integer",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/rekap/saluran": {
+            "get": {
+                "description": "Segment lengths are measured on EPSG:32749 and summed after duplicate segments are removed, in kilometres with two decimals.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "canals"
+                ],
+                "summary": "Canal length per level and condition",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/canal.RecapListResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "The initial import has not finished",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "asset.AssetResponse": {
+            "type": "object",
+            "properties": {
+                "jenis": {
+                    "type": "string",
+                    "enum": [
+                        "bendung",
+                        "bangunan_bagi",
+                        "bangunan_sadap",
+                        "bangunan_bagi_sadap",
+                        "bangunan_pelengkap"
+                    ],
+                    "example": "bangunan_bagi_sadap"
+                },
+                "kode_aset": {
+                    "type": "string",
+                    "example": "KW-0012"
+                },
+                "kondisi": {
+                    "type": "string",
+                    "enum": [
+                        "baik",
+                        "rusak_ringan",
+                        "rusak_sedang",
+                        "rusak_berat"
+                    ],
+                    "example": "rusak_sedang"
+                },
+                "lat": {
+                    "type": "number",
+                    "example": -7.65412
+                },
+                "lon": {
+                    "type": "number",
+                    "example": 110.41235
+                },
+                "nama_saluran": {
+                    "type": "string",
+                    "example": "Primer Kali Wening"
+                },
+                "nomenklatur": {
+                    "type": "string",
+                    "example": "B.KW.3"
+                },
+                "tanda": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "jauh_dari_saluran"
+                    ]
+                },
+                "tgl_kondisi": {
+                    "type": "string",
+                    "example": "2026-08-14"
+                }
+            }
+        },
+        "asset.DetailResponse": {
+            "type": "object",
+            "properties": {
+                "jenis": {
+                    "type": "string",
+                    "enum": [
+                        "bendung",
+                        "bangunan_bagi",
+                        "bangunan_sadap",
+                        "bangunan_bagi_sadap",
+                        "bangunan_pelengkap"
+                    ],
+                    "example": "bangunan_bagi_sadap"
+                },
+                "kode_aset": {
+                    "type": "string",
+                    "example": "KW-0012"
+                },
+                "kondisi": {
+                    "type": "string",
+                    "enum": [
+                        "baik",
+                        "rusak_ringan",
+                        "rusak_sedang",
+                        "rusak_berat"
+                    ],
+                    "example": "rusak_sedang"
+                },
+                "lat": {
+                    "type": "number",
+                    "example": -7.65412
+                },
+                "lon": {
+                    "type": "number",
+                    "example": 110.41235
+                },
+                "nama_saluran": {
+                    "type": "string",
+                    "example": "Primer Kali Wening"
+                },
+                "nomenklatur": {
+                    "type": "string",
+                    "example": "B.KW.3"
+                },
+                "riwayat": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/asset.ReportResponse"
+                    }
+                },
+                "tanda": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "jauh_dari_saluran"
+                    ]
+                },
+                "tgl_kondisi": {
+                    "type": "string",
+                    "example": "2026-08-14"
+                }
+            }
+        },
+        "asset.ImpactResponse": {
+            "type": "object",
+            "properties": {
+                "jumlah_petak": {
+                    "type": "integer",
+                    "example": 7
+                },
+                "kode_aset": {
+                    "type": "string",
+                    "example": "KW-0012"
+                },
+                "luas_terdampak_ha": {
+                    "type": "number",
+                    "example": 312.45
+                },
+                "petak": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/asset.ImpactedPlotResponse"
+                    }
+                }
+            }
+        },
+        "asset.ImpactedPlotResponse": {
+            "type": "object",
+            "properties": {
+                "kode_petak": {
+                    "type": "string",
+                    "example": "KW.3.Ki"
+                },
+                "luas_ha": {
+                    "type": "number",
+                    "example": 41.2
+                }
+            }
+        },
+        "asset.ListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/asset.AssetResponse"
+                    }
+                },
+                "jumlah": {
+                    "type": "integer",
+                    "example": 128
+                }
+            }
+        },
+        "asset.PriorityListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/asset.PriorityResponse"
+                    }
+                }
+            }
+        },
+        "asset.PriorityResponse": {
+            "type": "object",
+            "properties": {
+                "kode_aset": {
+                    "type": "string",
+                    "example": "KW-0012"
+                },
+                "kondisi": {
+                    "type": "string",
+                    "enum": [
+                        "rusak_ringan",
+                        "rusak_sedang",
+                        "rusak_berat"
+                    ],
+                    "example": "rusak_berat"
+                },
+                "luas_terdampak_ha": {
+                    "type": "number",
+                    "example": 312.45
+                },
+                "peringkat": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "skor": {
+                    "type": "number",
+                    "example": 1249.8
+                }
+            }
+        },
+        "asset.ReportResponse": {
+            "type": "object",
+            "properties": {
+                "id_laporan": {
+                    "type": "string",
+                    "example": "LP-2026-0021"
+                },
+                "jenis_kerusakan": {
+                    "type": "string",
+                    "example": "Retak pada sayap"
+                },
+                "keterangan": {
+                    "type": "string",
+                    "example": "Foto terlampir"
+                },
+                "kondisi": {
+                    "type": "string",
+                    "enum": [
+                        "baik",
+                        "rusak_ringan",
+                        "rusak_sedang",
+                        "rusak_berat"
+                    ],
+                    "example": "rusak_sedang"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lon": {
+                    "type": "number"
+                },
+                "nomenklatur": {
+                    "type": "string",
+                    "example": "B.KW.3"
+                },
+                "petugas": {
+                    "type": "string",
+                    "example": "Mulyono"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "aktif",
+                        "batal"
+                    ],
+                    "example": "aktif"
+                },
+                "tanggal": {
+                    "type": "string",
+                    "example": "2026-08-14"
+                }
+            }
+        },
+        "canal.RecapListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/canal.RecapResponse"
+                    }
+                }
+            }
+        },
+        "canal.RecapResponse": {
+            "type": "object",
+            "properties": {
+                "kondisi": {
+                    "type": "string",
+                    "enum": [
+                        "baik",
+                        "rusak_ringan",
+                        "rusak_sedang",
+                        "rusak_berat"
+                    ],
+                    "example": "rusak_berat"
+                },
+                "panjang_km": {
+                    "type": "number",
+                    "example": 3.42
+                },
+                "tingkat": {
+                    "type": "string",
+                    "enum": [
+                        "primer",
+                        "sekunder"
+                    ],
+                    "example": "sekunder"
+                }
+            }
+        },
+        "geojson.Feature": {
+            "type": "object",
+            "properties": {
+                "geometry": {
+                    "type": "object"
+                },
+                "properties": {
+                    "type": "object"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "Feature"
+                }
+            }
+        },
+        "geojson.FeatureCollection": {
+            "type": "object",
+            "properties": {
+                "features": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/geojson.Feature"
+                    }
+                },
+                "type": {
+                    "type": "string",
+                    "example": "FeatureCollection"
+                }
+            }
+        },
+        "health.StatusResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "memuat",
+                        "siap",
+                        "gagal"
+                    ],
+                    "example": "siap"
+                }
+            }
+        },
+        "ingest.FollowUpResponse": {
+            "type": "object",
+            "properties": {
+                "dibatalkan": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "ditambah": {
+                    "type": "integer",
+                    "example": 14
+                },
+                "diubah": {
+                    "type": "integer",
+                    "example": 6
+                },
+                "tidak_berubah": {
+                    "type": "integer",
+                    "example": 0
+                }
+            }
+        },
+        "quality.CategoryCountResponse": {
+            "type": "object",
+            "properties": {
+                "jumlah": {
+                    "type": "integer",
+                    "example": 37
+                },
+                "kategori": {
+                    "type": "string",
+                    "example": "koordinat_utm_dikonversi"
+                }
+            }
+        },
+        "quality.FindingListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/quality.FindingResponse"
+                    }
+                },
+                "jumlah": {
+                    "type": "integer",
+                    "example": 15
+                }
+            }
+        },
+        "quality.FindingResponse": {
+            "type": "object",
+            "properties": {
+                "kategori": {
+                    "type": "string",
+                    "example": "koordinat_tertukar_dibetulkan"
+                },
+                "masalah": {
+                    "type": "string",
+                    "example": "Lintang dan bujur tertukar"
+                },
+                "pengenal": {
+                    "type": "string",
+                    "example": "baris 3 (KW-0003)"
+                },
+                "sumber": {
+                    "type": "string",
+                    "example": "aset_bangunan.csv"
+                },
+                "tindakan": {
+                    "type": "string",
+                    "example": "Urutan dibetulkan"
+                }
+            }
+        },
+        "quality.SummaryResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/quality.CategoryCountResponse"
+                    }
+                }
+            }
+        },
+        "response.ErrorBody": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "ASSET_NOT_FOUND"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "bangunan tidak ditemukan"
+                },
+                "request_id": {
+                    "type": "string",
+                    "example": "0192b3a4-5c6d-7e8f-9a0b-1c2d3e4f5a6b"
+                }
+            }
+        },
+        "response.ErrorEnvelope": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/response.ErrorBody"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "description": "Import status",
+            "name": "health"
+        },
+        {
+            "description": "Irrigation structures: list, report history, downstream impact, maintenance priority",
+            "name": "assets"
+        },
+        {
+            "description": "Canal length recap",
+            "name": "canals"
+        },
+        {
+            "description": "Data-quality findings from the import",
+            "name": "quality"
+        },
+        {
+            "description": "Follow-up report import",
+            "name": "import"
+        },
+        {
+            "description": "GeoJSON layers for the map (outside the assignment contract)",
+            "name": "map"
+        }
+    ]
+}

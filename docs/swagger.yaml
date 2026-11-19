@@ -1,0 +1,632 @@
+basePath: /
+definitions:
+  asset.AssetResponse:
+    properties:
+      jenis:
+        enum:
+        - bendung
+        - bangunan_bagi
+        - bangunan_sadap
+        - bangunan_bagi_sadap
+        - bangunan_pelengkap
+        example: bangunan_bagi_sadap
+        type: string
+      kode_aset:
+        example: KW-0012
+        type: string
+      kondisi:
+        enum:
+        - baik
+        - rusak_ringan
+        - rusak_sedang
+        - rusak_berat
+        example: rusak_sedang
+        type: string
+      lat:
+        example: -7.65412
+        type: number
+      lon:
+        example: 110.41235
+        type: number
+      nama_saluran:
+        example: Primer Kali Wening
+        type: string
+      nomenklatur:
+        example: B.KW.3
+        type: string
+      tanda:
+        example:
+        - jauh_dari_saluran
+        items:
+          type: string
+        type: array
+      tgl_kondisi:
+        example: "2026-08-14"
+        type: string
+    type: object
+  asset.DetailResponse:
+    properties:
+      jenis:
+        enum:
+        - bendung
+        - bangunan_bagi
+        - bangunan_sadap
+        - bangunan_bagi_sadap
+        - bangunan_pelengkap
+        example: bangunan_bagi_sadap
+        type: string
+      kode_aset:
+        example: KW-0012
+        type: string
+      kondisi:
+        enum:
+        - baik
+        - rusak_ringan
+        - rusak_sedang
+        - rusak_berat
+        example: rusak_sedang
+        type: string
+      lat:
+        example: -7.65412
+        type: number
+      lon:
+        example: 110.41235
+        type: number
+      nama_saluran:
+        example: Primer Kali Wening
+        type: string
+      nomenklatur:
+        example: B.KW.3
+        type: string
+      riwayat:
+        items:
+          $ref: '#/definitions/asset.ReportResponse'
+        type: array
+      tanda:
+        example:
+        - jauh_dari_saluran
+        items:
+          type: string
+        type: array
+      tgl_kondisi:
+        example: "2026-08-14"
+        type: string
+    type: object
+  asset.ImpactResponse:
+    properties:
+      jumlah_petak:
+        example: 7
+        type: integer
+      kode_aset:
+        example: KW-0012
+        type: string
+      luas_terdampak_ha:
+        example: 312.45
+        type: number
+      petak:
+        items:
+          $ref: '#/definitions/asset.ImpactedPlotResponse'
+        type: array
+    type: object
+  asset.ImpactedPlotResponse:
+    properties:
+      kode_petak:
+        example: KW.3.Ki
+        type: string
+      luas_ha:
+        example: 41.2
+        type: number
+    type: object
+  asset.ListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/asset.AssetResponse'
+        type: array
+      jumlah:
+        example: 128
+        type: integer
+    type: object
+  asset.PriorityListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/asset.PriorityResponse'
+        type: array
+    type: object
+  asset.PriorityResponse:
+    properties:
+      kode_aset:
+        example: KW-0012
+        type: string
+      kondisi:
+        enum:
+        - rusak_ringan
+        - rusak_sedang
+        - rusak_berat
+        example: rusak_berat
+        type: string
+      luas_terdampak_ha:
+        example: 312.45
+        type: number
+      peringkat:
+        example: 1
+        type: integer
+      skor:
+        example: 1249.8
+        type: number
+    type: object
+  asset.ReportResponse:
+    properties:
+      id_laporan:
+        example: LP-2026-0021
+        type: string
+      jenis_kerusakan:
+        example: Retak pada sayap
+        type: string
+      keterangan:
+        example: Foto terlampir
+        type: string
+      kondisi:
+        enum:
+        - baik
+        - rusak_ringan
+        - rusak_sedang
+        - rusak_berat
+        example: rusak_sedang
+        type: string
+      lat:
+        type: number
+      lon:
+        type: number
+      nomenklatur:
+        example: B.KW.3
+        type: string
+      petugas:
+        example: Mulyono
+        type: string
+      status:
+        enum:
+        - aktif
+        - batal
+        example: aktif
+        type: string
+      tanggal:
+        example: "2026-08-14"
+        type: string
+    type: object
+  canal.RecapListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/canal.RecapResponse'
+        type: array
+    type: object
+  canal.RecapResponse:
+    properties:
+      kondisi:
+        enum:
+        - baik
+        - rusak_ringan
+        - rusak_sedang
+        - rusak_berat
+        example: rusak_berat
+        type: string
+      panjang_km:
+        example: 3.42
+        type: number
+      tingkat:
+        enum:
+        - primer
+        - sekunder
+        example: sekunder
+        type: string
+    type: object
+  geojson.Feature:
+    properties:
+      geometry:
+        type: object
+      properties:
+        type: object
+      type:
+        example: Feature
+        type: string
+    type: object
+  geojson.FeatureCollection:
+    properties:
+      features:
+        items:
+          $ref: '#/definitions/geojson.Feature'
+        type: array
+      type:
+        example: FeatureCollection
+        type: string
+    type: object
+  health.StatusResponse:
+    properties:
+      status:
+        enum:
+        - memuat
+        - siap
+        - gagal
+        example: siap
+        type: string
+    type: object
+  ingest.FollowUpResponse:
+    properties:
+      dibatalkan:
+        example: 3
+        type: integer
+      ditambah:
+        example: 14
+        type: integer
+      diubah:
+        example: 6
+        type: integer
+      tidak_berubah:
+        example: 0
+        type: integer
+    type: object
+  quality.CategoryCountResponse:
+    properties:
+      jumlah:
+        example: 37
+        type: integer
+      kategori:
+        example: koordinat_utm_dikonversi
+        type: string
+    type: object
+  quality.FindingListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/quality.FindingResponse'
+        type: array
+      jumlah:
+        example: 15
+        type: integer
+    type: object
+  quality.FindingResponse:
+    properties:
+      kategori:
+        example: koordinat_tertukar_dibetulkan
+        type: string
+      masalah:
+        example: Lintang dan bujur tertukar
+        type: string
+      pengenal:
+        example: baris 3 (KW-0003)
+        type: string
+      sumber:
+        example: aset_bangunan.csv
+        type: string
+      tindakan:
+        example: Urutan dibetulkan
+        type: string
+    type: object
+  quality.SummaryResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/quality.CategoryCountResponse'
+        type: array
+    type: object
+  response.ErrorBody:
+    properties:
+      code:
+        example: ASSET_NOT_FOUND
+        type: string
+      message:
+        example: bangunan tidak ditemukan
+        type: string
+      request_id:
+        example: 0192b3a4-5c6d-7e8f-9a0b-1c2d3e4f5a6b
+        type: string
+    type: object
+  response.ErrorEnvelope:
+    properties:
+      error:
+        $ref: '#/definitions/response.ErrorBody'
+    type: object
+info:
+  contact: {}
+  description: Combines the asset inventory, field reports and network map of an irrigation
+    area into one picture of network condition, to help set maintenance priorities.
+  title: Irrigation Network Condition API
+  version: 1.0.0
+paths:
+  /api/aset:
+    get:
+      description: Every structure with its latest condition. Filters accept the same
+        spelling variants as the source files, so `RR` selects `rusak_ringan`. A structure
+        without geometry has `lon` and `lat` set to null.
+      parameters:
+      - description: Structure type
+        enum:
+        - bendung
+        - bangunan_bagi
+        - bangunan_sadap
+        - bangunan_bagi_sadap
+        - bangunan_pelengkap
+        in: query
+        name: jenis
+        type: string
+      - description: Latest condition
+        enum:
+        - baik
+        - rusak_ringan
+        - rusak_sedang
+        - rusak_berat
+        in: query
+        name: kondisi
+        type: string
+      - description: Canal name, case-insensitive
+        in: query
+        name: saluran
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/asset.ListResponse'
+        "400":
+          description: Unknown jenis or kondisi
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: List irrigation structures
+      tags:
+      - assets
+  /api/aset/{kode_aset}:
+    get:
+      description: '`riwayat` holds every report matched to the structure, newest
+        first, cancelled ones included. Reports dropped as duplicates are left out.'
+      parameters:
+      - description: Asset code, e.g. KW-0012
+        in: path
+        name: kode_aset
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/asset.DetailResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: Get one structure with its report history
+      tags:
+      - assets
+  /api/aset/{kode_aset}/dampak:
+    get:
+      description: 'The tertiary plots that lose water when the structure fails: every
+        plot whose water path from the weir passes through it, including plots tapped
+        at the structure itself. A structure without geometry or flagged `jauh_dari_saluran`
+        has an impacted area of 0.'
+      parameters:
+      - description: Asset code, e.g. KW-0012
+        in: path
+        name: kode_aset
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/asset.ImpactResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: Downstream impact of one structure
+      tags:
+      - assets
+  /api/health:
+    get:
+      description: '`memuat` while the data folder is being imported, `siap` once
+        it has finished. Always answers 200, because the checker polls it during the
+        import. Every other endpoint answers 503 until the status is `siap`.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/health.StatusResponse'
+      summary: Import status
+      tags:
+      - health
+  /api/impor/susulan:
+    post:
+      description: 'Imports `laporan_susulan.xlsx` from the data folder: new reports
+        are added, reports with a known `id_laporan` replace the stored one, and reports
+        with status `batal` are cancelled. The latest condition and the priorities
+        are recomputed. Safe to repeat: a second call reports every row as `tidak_berubah`
+        and leaves the same state.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ingest.FollowUpResponse'
+        "404":
+          description: The follow-up file is not in the data folder
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+        "422":
+          description: The follow-up file is not a readable workbook
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: Import the follow-up reports
+      tags:
+      - import
+  /api/kualitas-data:
+    get:
+      description: Counted per source row or feature that was repaired, flagged or
+        dropped, across every imported file. The eleven categories required by the
+        assignment are always present, with 0 when nothing was found; extra categories
+        follow.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/quality.SummaryResponse'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: Number of data-quality findings per category
+      tags:
+      - quality
+  /api/kualitas-data/temuan:
+    get:
+      description: 'Not part of the assignment contract; added for the data-quality
+        page. One row per cleaning action: source file, row reference, problem and
+        the action taken.'
+      parameters:
+      - description: Finding category, e.g. aset_ganda
+        in: query
+        name: kategori
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/quality.FindingListResponse'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: List data-quality findings
+      tags:
+      - quality
+  /api/peta/petak:
+    get:
+      description: 'Not part of the assignment contract; added for the map. Geometry
+        is WGS84. Properties: `kode_petak`, `nama_petak`, `luas_ha`, `luas_baku_ha`,
+        `luas_geometri_ha`, `nomenklatur_sadap`, `kode_aset_sadap`, `tanda`.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geojson.FeatureCollection'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: Tertiary plots as GeoJSON
+      tags:
+      - map
+  /api/peta/saluran:
+    get:
+      description: 'Not part of the assignment contract; added for the map. Geometry
+        is WGS84. Properties: `id_ruas`, `nama_saluran`, `tingkat`, `kondisi`, `panjang_m`.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geojson.FeatureCollection'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: Canal segments as GeoJSON
+      tags:
+      - map
+  /api/prioritas:
+    get:
+      description: Score = condition weight (baik 0, rusak_ringan 1, rusak_sedang
+        2, rusak_berat 4) x impacted area. Only scores above 0 are listed, highest
+        first; ties are ordered by `kode_aset`.
+      parameters:
+      - default: 20
+        description: Maximum number of rows
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/asset.PriorityListResponse'
+        "400":
+          description: limit is not a positive integer
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: Maintenance priority list
+      tags:
+      - assets
+  /api/rekap/saluran:
+    get:
+      description: Segment lengths are measured on EPSG:32749 and summed after duplicate
+        segments are removed, in kilometres with two decimals.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/canal.RecapListResponse'
+        "503":
+          description: The initial import has not finished
+          schema:
+            $ref: '#/definitions/response.ErrorEnvelope'
+      summary: Canal length per level and condition
+      tags:
+      - canals
+schemes:
+- http
+swagger: "2.0"
+tags:
+- description: Import status
+  name: health
+- description: 'Irrigation structures: list, report history, downstream impact, maintenance
+    priority'
+  name: assets
+- description: Canal length recap
+  name: canals
+- description: Data-quality findings from the import
+  name: quality
+- description: Follow-up report import
+  name: import
+- description: GeoJSON layers for the map (outside the assignment contract)
+  name: map
