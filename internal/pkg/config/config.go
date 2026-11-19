@@ -17,9 +17,12 @@ type Config struct {
 	// RequestTimeout bounds one HTTP request, including its database queries.
 	RequestTimeout time.Duration
 	DatabaseURL    string
-	// DataDir is the folder holding the five source files. It is imported when
-	// the server starts; the checker replaces its content before starting.
+	// DataDir is the folder holding the five source files that ship with the
+	// service. It is imported when the server starts.
 	DataDir string
+	// DataOverrideDir is data/ at the repo root, where the assignment's checker
+	// puts its own data set. When it holds source files it replaces DataDir.
+	DataOverrideDir string
 	// DatabaseWait bounds how long startup waits for PostgreSQL to accept connections.
 	DatabaseWait time.Duration
 }
@@ -33,6 +36,7 @@ func Load() (Config, error) {
 		RequestTimeout:  getduration("REQUEST_TIMEOUT", 60*time.Second),
 		DatabaseURL:     os.Getenv("DATABASE_URL"),
 		DataDir:         getenv("DATA_DIR", "./data"),
+		DataOverrideDir: getenv("DATA_OVERRIDE_DIR", "../data"),
 		DatabaseWait:    getduration("DATABASE_WAIT", 3*time.Minute),
 	}
 	if cfg.DatabaseURL == "" {
