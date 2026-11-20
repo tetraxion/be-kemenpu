@@ -8,7 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"irrigation-server/internal/pkg/datafile"
 	"irrigation-server/internal/pkg/geo"
+	"irrigation-server/internal/pkg/network/networktest"
 )
 
 // Test geometry is laid out in metres around origin, a point inside UTM zone 49S.
@@ -25,14 +27,14 @@ func coordinates(t *testing.T, v any) json.RawMessage {
 	return b
 }
 
-func lineFeature(t *testing.T, code, condition string, offsets ...[2]float64) Feature {
+func lineFeature(t *testing.T, code, condition string, offsets ...[2]float64) datafile.Feature {
 	t.Helper()
 	var line [][2]float64
 	for _, o := range offsets {
 		p := wgs(o[0], o[1])
 		line = append(line, [2]float64{p.Lon, p.Lat})
 	}
-	return Feature{
+	return datafile.Feature{
 		Properties:   map[string]any{"id_ruas": code, "nama_saluran": "Primer Uji", "tingkat": " PRIMER", "kondisi": condition},
 		GeometryType: "LineString", Coordinates: coordinates(t, line),
 	}
@@ -49,7 +51,7 @@ func categories(rec *Recorder) map[string]int {
 func TestCleanCanalsDropsDuplicatesAndConvertsCoordinates(t *testing.T) {
 	utmLine := [][2]float64{{origin.X + 1000, origin.Y}, {origin.X + 2000, origin.Y}}
 	swappedStart, swappedEnd := wgs(2000, 0), wgs(3000, 0)
-	features := []Feature{
+	features := []datafile.Feature{
 		lineFeature(t, "R1", "RR", [2]float64{0, 0}, [2]float64{1000, 0}),
 		lineFeature(t, "R1-COPY", "rr", [2]float64{1000, 0}, [2]float64{0, 0}), // same geometry, drawn backwards
 		{Properties: map[string]any{"id_ruas": "R2", "tingkat": "primer", "kondisi": "b"},
@@ -78,8 +80,8 @@ func TestCleanCanalsDropsDuplicatesAndConvertsCoordinates(t *testing.T) {
 	assert.Equal(t, 1, got[categoryUnreadableGeom])
 }
 
-func assetRow(code, nomenclature, x, y, condition, date string) Row {
-	return Row{"kode_aset": code, "nomenklatur": nomenclature, "jenis": "Bangunan Sadap", "nama_saluran": "Primer Uji",
+func assetRow(code, nomenclature, x, y, condition, date string) datafile.Row {
+	return datafile.Row{"kode_aset": code, "nomenklatur": nomenclature, "jenis": "Bangunan Sadap", "nama_saluran": "Primer Uji",
 		"x": x, "y": y, "kondisi": condition, "tahun_bangun": "1990", "tgl_update": date}
 }
 
@@ -88,13 +90,13 @@ func lonLatText(p geo.LonLat) (string, string) {
 }
 
 func TestCleanAssetsAppliesTheCoordinateRules(t *testing.T) {
-	canals := CleanCanals([]Feature{lineFeature(t, "R1", "baik", [2]float64{0, 0}, [2]float64{5000, 0})}, &Recorder{})
+	canals := CleanCanals([]datafile.Feature{lineFeature(t, "R1", "baik", [2]float64{0, 0}, [2]float64{5000, 0})}, &Recorder{})
 
 	nearLon, nearLat := lonLatText(wgs(100, 20))   // 20 m from the canal
 	limitLon, limitLat := lonLatText(wgs(200, 49)) // just inside 50 m
 	farLon, farLat := lonLatText(wgs(300, 400))    // 400 m: flagged, geometry kept
 	awayLon, awayLat := lonLatText(wgs(400, 2500)) // 2.5 km: geometry dropped
-	rows := []Row{
+	rows := []datafile.Row{
 		assetRow("KW-0001", "bkw1", nearLon, nearLat, "RR", "2025-01-10"),
 		assetRow("KW-0002", "B KW 2", limitLat, limitLon, "b", "10/01/2025"),                                                   // swapped
 		assetRow("KW-0003", "b-kw-3", fmt.Sprintf("%.2f", origin.X+500), fmt.Sprintf("%.2f", origin.Y+10), "rs", "2025/01/10"), // UTM
@@ -133,7 +135,7 @@ func TestCleanAssetsAppliesTheCoordinateRules(t *testing.T) {
 
 func TestCleanAssetsKeepsTheLatestOfADuplicatedCode(t *testing.T) {
 	lon, lat := lonLatText(wgs(100, 0))
-	rows := []Row{
+	rows := []datafile.Row{
 		assetRow("KW-0011", "B.SR.2", lon, lat, "b", "2024-12-25"),
 		assetRow("KW-0012", "B.SR.3", lon, lat, "baik", "1 Juli 2025"),
 		assetRow("kw-0011", "b_sr_2", lon, lat, "rusak berat", "17-06-2025"), // newer, different date format
@@ -151,7 +153,7 @@ func TestCleanAssetsKeepsTheLatestOfADuplicatedCode(t *testing.T) {
 	assert.Equal(t, 2, categories(rec)[CategoryDuplicateAsset])
 }
 
-func squareFeature(t *testing.T, code string, area any, offtake string, x, y, side float64, close bool) Feature {
+func squareFeature(t *testing.T, code string, area any, offtake string, x, y, side float64, close bool) datafile.Feature {
 	t.Helper()
 	corners := [][2]float64{{x, y}, {x + side, y}, {x + side, y + side}, {x, y + side}}
 	if close {
@@ -162,7 +164,7 @@ func squareFeature(t *testing.T, code string, area any, offtake string, x, y, si
 		p := wgs(c[0], c[1])
 		ring = append(ring, [2]float64{p.Lon, p.Lat})
 	}
-	return Feature{
+	return datafile.Feature{
 		Properties:   map[string]any{"kode_petak": code, "nama_petak": "Petak " + code, "luas_baku": area, "nomenklatur_sadap": offtake},
 		GeometryType: "Polygon", Coordinates: coordinates(t, [][][2]float64{ring}),
 	}
@@ -175,7 +177,7 @@ func fakeRepair(areaM2 float64, wasValid bool) PolygonRepairer {
 }
 
 func TestCleanPlotsAppliesTheAreaRules(t *testing.T) {
-	features := []Feature{
+	features := []datafile.Feature{
 		squareFeature(t, "P.1", 41.0, "bkw1", 0, 0, 640, true),       // plausible
 		squareFeature(t, "P.2", "40,5", "B KW 1", 0, 0, 640, true),   // decimal comma
 		squareFeature(t, "P.3", 412000.0, "B.KW.1", 0, 0, 640, true), // m², becomes 41.2 ha
@@ -215,14 +217,14 @@ func TestCleanPlotsAppliesTheAreaRules(t *testing.T) {
 
 func TestCleanPlotsCountsRepairedGeometry(t *testing.T) {
 	rec := &Recorder{}
-	plots := CleanPlots([]Feature{
+	plots := CleanPlots([]datafile.Feature{
 		squareFeature(t, "OPEN", 41.0, "", 0, 0, 640, false), // ring not closed in the source
 	}, fakeRepair(409600, true), rec)
 	require.Len(t, plots, 1)
 	assert.Equal(t, 1, categories(rec)[CategoryGeometryRepaired])
 
 	rec = &Recorder{}
-	CleanPlots([]Feature{squareFeature(t, "BOWTIE", 41.0, "", 0, 0, 640, true)}, fakeRepair(409600, false), rec)
+	CleanPlots([]datafile.Feature{squareFeature(t, "BOWTIE", 41.0, "", 0, 0, 640, true)}, fakeRepair(409600, false), rec)
 	assert.Equal(t, 1, categories(rec)[CategoryGeometryRepaired], "a polygon PostGIS had to make valid is counted")
 }
 
@@ -238,7 +240,7 @@ func TestCleanReportsMatchesByNomenclatureThenDistance(t *testing.T) {
 	ref := NewReference(referenceAssets())
 	near := wgs(1000, 25) // 25 m from KW-0002
 	away := wgs(1000, 35) // 35 m: beyond the 30 m limit
-	rows := []Row{
+	rows := []datafile.Row{
 		{"id_laporan": "LP-1", "tanggal": "22 Agustus 2026", "nomenklatur": "bkw 1", "kondisi": "RB", "status": "AKTIF"},
 		{"id_laporan": "LP-2", "tanggal": "46246", "nomenklatur": "", "kondisi": "rr", "status": "aktif",
 			"lat": fmt.Sprintf("%.7f", near.Lat), "lon": fmt.Sprintf("%.7f", near.Lon)},
@@ -269,7 +271,7 @@ func TestCleanReportsMatchesByNomenclatureThenDistance(t *testing.T) {
 }
 
 func TestCleanReportsKeepsTheLastRowOfARepeatedID(t *testing.T) {
-	rows := []Row{
+	rows := []datafile.Row{
 		{"id_laporan": "LP-1", "tanggal": "2026-08-01", "nomenklatur": "B.KW.1", "kondisi": "rr"},
 		{"id_laporan": "lp-1", "tanggal": "2026-08-02", "nomenklatur": "B.KW.1", "kondisi": "rb"},
 	}
@@ -308,10 +310,10 @@ func TestClassifyFollowUp(t *testing.T) {
 // Worked example: B.KW.2 affects four plots totalling 150 ha, KW.1.Ki upstream is spared.
 func TestAnalyzeMatchesTheAssignmentExample(t *testing.T) {
 	var canals []Canal
-	for _, line := range exampleLines() {
+	for _, line := range networktest.ExampleLines() {
 		canals = append(canals, Canal{UTM: [][]geo.Point{line}})
 	}
-	points := examplePoints()
+	points := networktest.ExamplePoints()
 	structure := func(code, nomenclature, kind, point string) *Asset {
 		a := &Asset{Code: code, Nomenclature: nomenclature, Kind: kind, Location: &geo.LonLat{}, UTM: points[point]}
 		return a

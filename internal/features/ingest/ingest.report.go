@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"irrigation-server/internal/pkg/datafile"
 	"irrigation-server/internal/pkg/geo"
 	"irrigation-server/internal/pkg/normalize"
 )
 
 // CleanReports matches by nomenclature, then the nearest structure within 30 m. A repeated id_laporan keeps the last row.
-func CleanReports(rows []Row, sourceFile string, ref Reference, rec *Recorder) []Report {
+func CleanReports(rows []datafile.Row, sourceFile string, ref Reference, rec *Recorder) []Report {
 	position := map[string]int{}
 	var reports []Report
 	for i, row := range rows {

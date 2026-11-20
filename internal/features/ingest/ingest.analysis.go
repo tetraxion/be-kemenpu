@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"irrigation-server/internal/pkg/geo"
+	"irrigation-server/internal/pkg/network"
 	"irrigation-server/internal/pkg/normalize"
 )
 
@@ -29,11 +30,11 @@ func Analyze(canals []Canal, assets []*Asset, plots []*Plot, rec *Recorder) {
 	for _, c := range canals {
 		lines = append(lines, c.UTM...)
 	}
-	network := NewNetwork(lines, ConnectToleranceM, JunctionToleranceM)
+	graph := network.New(lines, ConnectToleranceM, JunctionToleranceM)
 	hasRoot := false
 	for _, a := range assets {
 		if a.Kind == normalize.KindWeir && a.onNetwork() {
-			hasRoot = network.SetRoot(a.UTM)
+			hasRoot = graph.SetRoot(a.UTM)
 			break
 		}
 	}
@@ -41,12 +42,12 @@ func Analyze(canals []Canal, assets []*Asset, plots []*Plot, rec *Recorder) {
 		rec.Add(FileAssets, "-", categoryNoWeir, "Tidak ada bendung dengan posisi pada jaringan",
 			"Arah aliran tidak dapat ditentukan, luas terdampak semua bangunan 0")
 	}
-	positions := map[*Asset]Position{}
+	positions := map[*Asset]network.Position{}
 	for _, a := range assets {
 		if !a.onNetwork() {
 			continue
 		}
-		if pos, ok := network.Locate(a.UTM, MaxCanalDistanceM); ok {
+		if pos, ok := graph.Locate(a.UTM, MaxCanalDistanceM); ok {
 			positions[a] = pos
 		}
 	}
@@ -85,7 +86,7 @@ func Analyze(canals []Canal, assets []*Asset, plots []*Plot, rec *Recorder) {
 		}
 		for _, x := range assets {
 			position, located := positions[x]
-			if located && (x == offtake || network.Downstream(position, offtakePosition)) {
+			if located && (x == offtake || graph.Downstream(position, offtakePosition)) {
 				x.ImpactedPlots = append(x.ImpactedPlots, p.Code)
 				totals[x] += p.AreaHa
 			}

@@ -7,13 +7,14 @@ import (
 	"strings"
 	"sync"
 
+	"irrigation-server/internal/pkg/datafile"
 	"irrigation-server/internal/pkg/geo"
 	"irrigation-server/internal/pkg/normalize"
 )
 
 type PolygonRepairer func(geojson string) (PolygonRepair, error)
 
-func parsePolygons(f Feature) (polygons [][][]geo.LonLat, fromUTM, swapped, closed, ok bool) {
+func parsePolygons(f datafile.Feature) (polygons [][][]geo.LonLat, fromUTM, swapped, closed, ok bool) {
 	var raw [][][][]float64
 	switch f.GeometryType {
 	case "Polygon":
@@ -61,7 +62,7 @@ type plotGeometry struct {
 	repair                       PolygonRepair
 }
 
-func preparePlotGeometry(f Feature, repair PolygonRepairer) plotGeometry {
+func preparePlotGeometry(f datafile.Feature, repair PolygonRepairer) plotGeometry {
 	var g plotGeometry
 	var polygons [][][]geo.LonLat
 	polygons, g.fromUTM, g.swapped, g.closed, g.ok = parsePolygons(f)
@@ -87,7 +88,7 @@ func preparePlotGeometry(f Feature, repair PolygonRepairer) plotGeometry {
 }
 
 // Results are written by index, so the output keeps file order.
-func preparePlotGeometries(features []Feature, repair PolygonRepairer) []plotGeometry {
+func preparePlotGeometries(features []datafile.Feature, repair PolygonRepairer) []plotGeometry {
 	geometries := make([]plotGeometry, len(features))
 	slots := make(chan struct{}, repairWorkers)
 	var wg sync.WaitGroup
@@ -109,7 +110,7 @@ func preparePlotGeometries(features []Feature, repair PolygonRepairer) []plotGeo
 }
 
 // CleanPlots applies the rules in file order: the first of a repeated kode_petak is kept.
-func CleanPlots(features []Feature, repair PolygonRepairer, rec *Recorder) []*Plot {
+func CleanPlots(features []datafile.Feature, repair PolygonRepairer, rec *Recorder) []*Plot {
 	geometries := preparePlotGeometries(features, repair)
 
 	seen := map[string]bool{}

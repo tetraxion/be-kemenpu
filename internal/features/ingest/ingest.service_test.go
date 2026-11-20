@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"irrigation-server/internal/pkg/datafile"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -64,7 +65,7 @@ func writeDataDir(t *testing.T) string {
 	write := func(name string, content []byte) {
 		require.NoError(t, os.WriteFile(filepath.Join(dir, name), content, 0o600))
 	}
-	collection := func(features ...Feature) []byte {
+	collection := func(features ...datafile.Feature) []byte {
 		type geometry struct {
 			Type        string          `json:"type"`
 			Coordinates json.RawMessage `json:"coordinates"`
@@ -154,7 +155,7 @@ func TestImportFollowUpPreconditions(t *testing.T) {
 
 func TestPolygonRepairsRunConcurrentlyButKeepFileOrder(t *testing.T) {
 	const count = 40
-	features := make([]Feature, count)
+	features := make([]datafile.Feature, count)
 	for i := range features {
 		features[i] = squareFeature(t, fmt.Sprintf("P.%02d", i), nil, "", 0, 0, 100, true)
 	}

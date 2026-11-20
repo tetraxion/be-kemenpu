@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"irrigation-server/internal/pkg/datafile"
 	"irrigation-server/internal/pkg/geo"
 	"irrigation-server/internal/pkg/normalize"
 )
@@ -19,7 +20,7 @@ func (c Canal) GeoJSON() string {
 	return geometryJSON("MultiLineString", parts)
 }
 
-func parseLines(f Feature) (parts [][]geo.LonLat, fromUTM, swapped, ok bool) {
+func parseLines(f datafile.Feature) (parts [][]geo.LonLat, fromUTM, swapped, ok bool) {
 	var raw [][][]float64
 	switch f.GeometryType {
 	case "LineString":
@@ -71,7 +72,7 @@ func sameGeometry(a, b [][]geo.Point) bool {
 }
 
 // CleanCanals drops repeated geometry. The source does not draw segments in flow direction.
-func CleanCanals(features []Feature, rec *Recorder) []Canal {
+func CleanCanals(features []datafile.Feature, rec *Recorder) []Canal {
 	var canals []Canal
 	for i, f := range features {
 		code := normalize.Text(f.Properties["id_ruas"])

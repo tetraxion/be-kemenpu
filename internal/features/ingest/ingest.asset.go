@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"irrigation-server/internal/pkg/datafile"
 	"irrigation-server/internal/pkg/geo"
 	"irrigation-server/internal/pkg/normalize"
 )
@@ -22,7 +23,7 @@ func distanceToCanals(p geo.Point, canals []Canal) float64 {
 }
 
 // CleanAssets keeps the latest row of each repeated kode_aset.
-func CleanAssets(rows []Row, canals []Canal, rec *Recorder) []*Asset {
+func CleanAssets(rows []datafile.Row, canals []Canal, rec *Recorder) []*Asset {
 	byCode := map[string]*Asset{}
 	var codes []string
 	for i, row := range rows {
