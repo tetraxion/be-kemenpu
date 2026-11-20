@@ -102,7 +102,11 @@ cmd/server/            wiring: startup, router, readiness gate
 cmd/migrate/           apply or roll back migrations
 cmd/seed/              fill the database from the data folder
 internal/features/<f>/ one feature = one package
-internal/pkg/          cross-feature infrastructure (no feature logic)
+internal/pkg/          cross-feature code (no feature logic)
+  network/             canal graph and flow direction from the weir
+  datafile/            CSV, Excel and GeoJSON readers
+  geo/ normalize/      coordinate conversion, spelling normalization
+  config/ database/ ...  configuration, connection, errors, middleware
 migrations/            ordered SQL, embedded in the binary
 docs/                  generated OpenAPI specification (swaggo)
 ```
@@ -119,7 +123,7 @@ Files inside a feature follow `<f>.{domain,dto,service,repository,handler,route}
 
 | Feature | Serves |
 | --- | --- |
-| `ingest` | reading, cleaning, network analysis, follow-up import. The only feature that writes to the database |
+| `ingest` | import, cleaning rules, impact analysis, follow-up import. The only feature that writes to the database |
 | `asset` | structures, report history, downstream impact, maintenance priority |
 | `canal` | canal length recap, canal map layer |
 | `plot` | tertiary plot map layer |
