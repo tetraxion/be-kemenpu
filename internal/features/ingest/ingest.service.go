@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"irrigation-server/internal/pkg/datafile"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -52,8 +53,8 @@ func (s *service) Run(ctx context.Context) {
 
 // Each file has its own read error, so one unreadable file does not stop the others.
 type sources struct {
-	canals, plots                              []Feature
-	assets, reports                            []Row
+	canals, plots                              []datafile.Feature
+	assets, reports                            []datafile.Row
 	canalsErr, plotsErr, assetsErr, reportsErr error
 }
 
@@ -72,10 +73,10 @@ func (s *service) readSources() sources {
 		}
 	}
 	var wg sync.WaitGroup
-	wg.Go(guard(&src.canalsErr, func() { src.canals, src.canalsErr = ReadGeoJSON(path(FileCanals)) }))
-	wg.Go(guard(&src.assetsErr, func() { src.assets, src.assetsErr = ReadCSV(path(FileAssets)) }))
-	wg.Go(guard(&src.plotsErr, func() { src.plots, src.plotsErr = ReadGeoJSON(path(FilePlots)) }))
-	wg.Go(guard(&src.reportsErr, func() { src.reports, src.reportsErr = ReadXLSX(path(FileReports)) }))
+	wg.Go(guard(&src.canalsErr, func() { src.canals, src.canalsErr = datafile.ReadGeoJSON(path(FileCanals)) }))
+	wg.Go(guard(&src.assetsErr, func() { src.assets, src.assetsErr = datafile.ReadCSV(path(FileAssets)) }))
+	wg.Go(guard(&src.plotsErr, func() { src.plots, src.plotsErr = datafile.ReadGeoJSON(path(FilePlots)) }))
+	wg.Go(guard(&src.reportsErr, func() { src.reports, src.reportsErr = datafile.ReadXLSX(path(FileReports)) }))
 	wg.Wait()
 	return src
 }
@@ -133,7 +134,7 @@ func (s *service) ImportFollowUp(ctx context.Context) (Summary, error) {
 		// The file exists but cannot be opened.
 		return Summary{}, ErrFollowUpUnreadable.Wrap(err)
 	}
-	rows, err := ReadXLSX(path)
+	rows, err := datafile.ReadXLSX(path)
 	if err != nil {
 		return Summary{}, ErrFollowUpUnreadable.Wrap(err)
 	}
@@ -145,7 +146,7 @@ func (s *service) ImportFollowUpFrom(ctx context.Context, workbook io.Reader) (S
 		return Summary{}, ErrNotReady
 	}
 	// Parse before taking the lock so a slow upload does not hold up other imports.
-	rows, err := ReadXLSXFrom(workbook, "uploaded workbook")
+	rows, err := datafile.ReadXLSXFrom(workbook, "uploaded workbook")
 	if err != nil {
 		return Summary{}, ErrUploadUnreadable.Wrap(err)
 	}
@@ -158,7 +159,7 @@ func (s *service) ImportFollowUpFrom(ctx context.Context, workbook io.Reader) (S
 	return s.applyFollowUp(ctx, rows)
 }
 
-func hasColumn(rows []Row, name string) bool {
+func hasColumn(rows []datafile.Row, name string) bool {
 	for _, row := range rows {
 		if _, ok := row[name]; ok {
 			return true
@@ -168,7 +169,7 @@ func hasColumn(rows []Row, name string) bool {
 }
 
 // The caller holds s.mu. An upload is recorded under the same source name as the data folder file.
-func (s *service) applyFollowUp(ctx context.Context, rows []Row) (Summary, error) {
+func (s *service) applyFollowUp(ctx context.Context, rows []datafile.Row) (Summary, error) {
 	var summary Summary
 	err := s.repo.FollowUp(ctx, func(ref Reference, existing map[string]Report) FollowUpChange {
 		rec := &Recorder{}
