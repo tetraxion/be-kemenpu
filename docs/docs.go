@@ -184,7 +184,10 @@ const docTemplate = `{
         },
         "/api/impor/susulan": {
             "post": {
-                "description": "Imports ` + "`" + `laporan_susulan.xlsx` + "`" + ` from the data folder: new reports are added, reports with a known ` + "`" + `id_laporan` + "`" + ` replace the stored one, and reports with status ` + "`" + `batal` + "`" + ` are cancelled. The latest condition and the priorities are recomputed. Safe to repeat: a second call reports every row as ` + "`" + `tidak_berubah` + "`" + ` and leaves the same state.",
+                "description": "Imports ` + "`" + `laporan_susulan.xlsx` + "`" + ` from the data folder: new reports are added, reports with a known ` + "`" + `id_laporan` + "`" + ` replace the stored one, and reports with status ` + "`" + `batal` + "`" + ` are cancelled. The latest condition and the priorities are recomputed. Safe to repeat: a second call reports every row as ` + "`" + `tidak_berubah` + "`" + ` and leaves the same state.\n\nOptional: send the request as ` + "`" + `multipart/form-data` + "`" + ` with an ` + "`" + `.xlsx` + "`" + ` in the field ` + "`" + `berkas` + "`" + ` to import that file instead. The same cleaning rules apply and the response has the same shape. A request without a body always reads the data folder.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -192,11 +195,25 @@ const docTemplate = `{
                     "import"
                 ],
                 "summary": "Import the follow-up reports",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Follow-up workbook (.xlsx, at most 10 MB). Leave out to read the data folder.",
+                        "name": "berkas",
+                        "in": "formData"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/ingest.FollowUpResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "The upload has no file in ` + "`" + `berkas` + "`" + `, or the file is larger than 10 MB",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorEnvelope"
                         }
                     },
                     "404": {
@@ -206,7 +223,7 @@ const docTemplate = `{
                         }
                     },
                     "422": {
-                        "description": "The follow-up file is not a readable workbook",
+                        "description": "The file is not a readable workbook, or has no ` + "`" + `id_laporan` + "`" + ` column",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorEnvelope"
                         }
