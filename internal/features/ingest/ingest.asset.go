@@ -60,7 +60,7 @@ func CleanAssets(rows []Row, canals []Canal, rec *Recorder) []*Asset {
 			codes = append(codes, code)
 			continue
 		}
-		// ISO dates compare correctly as text. On equal dates the later row wins.
+		// ISO dates compare as text. On equal dates the later row wins.
 		dropped, kept := earlier, a
 		if a.InventoryDate < earlier.InventoryDate {
 			dropped, kept = a, earlier

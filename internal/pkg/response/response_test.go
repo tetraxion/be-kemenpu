@@ -18,7 +18,6 @@ import (
 	"irrigation-server/internal/pkg/middleware"
 )
 
-// respond runs Error for the given error and returns the status and envelope.
 func respond(t *testing.T, err error) (int, ErrorBody) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)

@@ -12,7 +12,6 @@ import (
 	"irrigation-server/migrations"
 )
 
-// MigrateUp applies every migration embedded from the migrations/ folder.
 func MigrateUp(databaseURL string) error {
 	m, err := newMigrator(databaseURL)
 	if err != nil {
@@ -25,7 +24,6 @@ func MigrateUp(databaseURL string) error {
 	return nil
 }
 
-// MigrateDown rolls back the given number of latest migration steps.
 func MigrateDown(databaseURL string, steps int) error {
 	m, err := newMigrator(databaseURL)
 	if err != nil {

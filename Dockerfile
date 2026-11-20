@@ -1,8 +1,7 @@
 FROM golang:1.27-alpine AS build
 WORKDIR /src
 
-# Fall back to fetching modules from their source when the module proxy is
-# unreachable; "direct" needs git.
+# "direct" is the fallback when the module proxy is unreachable, and it needs git.
 RUN apk add --no-cache git
 ENV GOPROXY="https://proxy.golang.org|direct"
 

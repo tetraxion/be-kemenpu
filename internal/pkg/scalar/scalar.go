@@ -28,7 +28,6 @@ var page = template.Must(template.New("scalar").Parse(`<!doctype html>
 </body>
 </html>`))
 
-// Register mounts the Scalar page at the given path (e.g. /scalar).
 func Register(r gin.IRoutes, path, specURL, title string) {
 	var buf bytes.Buffer
 	if err := page.Execute(&buf, map[string]string{

@@ -9,7 +9,7 @@ import (
 	"irrigation-server/internal/pkg/geo"
 )
 
-// The example scheme of the assignment, on a local metre grid:
+// The assignment's example scheme on a local metre grid:
 //
 //	Weir(0,0) - B.KW.1(1000,0) - B.KW.2(2000,0) - B.KW.3(3000,0)        primary
 //	                                 |

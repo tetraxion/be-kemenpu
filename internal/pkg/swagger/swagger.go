@@ -7,10 +7,9 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// SpecPath is where the JSON specification is served; Scalar reads it too.
+// SpecPath is also read by Scalar.
 const SpecPath = "/swagger/doc.json"
 
-// Register mounts Swagger UI at /swagger/index.html.
 func Register(r gin.IRoutes) {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }

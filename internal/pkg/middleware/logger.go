@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Logger records every request.
 func Logger(log *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
@@ -27,8 +26,7 @@ func Logger(log *slog.Logger) gin.HandlerFunc {
 		log.LogAttrs(c.Request.Context(), level, "http request",
 			slog.String("request_id", GetRequestID(c)),
 			slog.String("method", c.Request.Method),
-			// route is the registered pattern, empty for an unknown address;
-			// path is what the client actually asked for.
+			// route is the registered pattern, path is what the client asked for.
 			slog.String("route", c.FullPath()),
 			slog.String("path", c.Request.URL.Path),
 			slog.Int("status", status),
@@ -37,7 +35,6 @@ func Logger(log *slog.Logger) gin.HandlerFunc {
 	}
 }
 
-// Recovery catches a panic and answers 500 in the standard error shape.
 func Recovery(log *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {

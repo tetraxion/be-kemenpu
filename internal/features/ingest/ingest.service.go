@@ -144,7 +144,7 @@ func (s *service) ImportFollowUpFrom(ctx context.Context, workbook io.Reader) (S
 	if s.Status() != StatusReady {
 		return Summary{}, ErrNotReady
 	}
-	// Parse before taking the lock, a slow upload must not hold up other imports.
+	// Parse before taking the lock so a slow upload does not hold up other imports.
 	rows, err := ReadXLSXFrom(workbook, "uploaded workbook")
 	if err != nil {
 		return Summary{}, ErrUploadUnreadable.Wrap(err)

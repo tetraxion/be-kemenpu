@@ -1,5 +1,4 @@
-// Package normalize turns free-form source text (nomenclature, condition,
-// asset kind, dates, numbers) into the canonical values used by the API contract.
+// Package normalize turns free-form source text into the canonical values of the API contract.
 package normalize
 
 import (
@@ -29,7 +28,6 @@ const (
 	KindAuxiliary       = "bangunan_pelengkap"
 )
 
-// Canonical report statuses.
 const (
 	StatusActive    = "aktif"
 	StatusCancelled = "batal"
@@ -41,14 +39,12 @@ var (
 	whitespace          = regexp.MustCompile(`\s+`)
 )
 
-// Clean trims the value and collapses repeated whitespace.
 func Clean(s string) string {
 	s = strings.ReplaceAll(s, " ", " ")
 	return whitespace.ReplaceAllString(strings.TrimSpace(s), " ")
 }
 
-// Nomenclature rewrites "BKW 1", "b-kw-1" or "b_kw_6a" as "B.KW.1" / "B.KW.6A".
-// An empty value stays empty.
+// Nomenclature rewrites "BKW 1", "b-kw-1" or "b_kw_6a" as "B.KW.1" or "B.KW.6A".
 func Nomenclature(s string) string {
 	upper := strings.ToUpper(Clean(s))
 	if upper == "" {
@@ -62,11 +58,10 @@ func Nomenclature(s string) string {
 		}
 		return "B." + m[1] + "." + number + m[3]
 	}
-	// Unknown shape: keep it comparable by upper-casing and dot-separating.
+	// Unknown shape: upper-case and dot-separate so it stays comparable.
 	return strings.Trim(nonAlphanumeric.ReplaceAllString(upper, "."), ".")
 }
 
-// lettersOnly lower-cases the value and drops everything that is not a letter.
 func lettersOnly(s string) string {
 	var b strings.Builder
 	for _, r := range strings.ToLower(s) {
@@ -84,8 +79,7 @@ var conditions = map[string]string{
 	"rusakberat": ConditionHeavy, "rb": ConditionHeavy,
 }
 
-// Condition maps variants such as "RR", "Rusak Ringan" or "rusak ringan " to
-// the canonical value.
+// Condition maps variants such as "RR" or "Rusak Ringan" to the canonical value.
 func Condition(s string) (string, bool) {
 	c, ok := conditions[lettersOnly(s)]
 	return c, ok
@@ -122,13 +116,11 @@ var assetKinds = map[string]string{
 	"terjunan":          KindAuxiliary,
 }
 
-// AssetKind maps a structure type to one of the five contract values.
 func AssetKind(s string) (string, bool) {
 	k, ok := assetKinds[lettersOnly(s)]
 	return k, ok
 }
 
-// CanalLevel maps a canal level to "primer" or "sekunder".
 func CanalLevel(s string) (string, bool) {
 	switch level := lettersOnly(s); level {
 	case "primer", "sekunder":
@@ -138,7 +130,7 @@ func CanalLevel(s string) (string, bool) {
 	}
 }
 
-// ReportStatus maps a report status; anything that is not a cancellation is active.
+// ReportStatus treats anything that is not a cancellation as active.
 func ReportStatus(s string) string {
 	switch lettersOnly(s) {
 	case "batal", "dibatalkan":
@@ -182,9 +174,7 @@ func isoDate(year, month, day int) (string, bool) {
 	return d.Format(time.DateOnly), true
 }
 
-// Date parses the date formats found in the source files and returns
-// YYYY-MM-DD. Ambiguous numeric dates are read day first. A bare number is
-// read as an Excel serial date, which is how raw date cells arrive.
+// Date returns YYYY-MM-DD. Day first when ambiguous. A bare number is an Excel serial date.
 func Date(s string) (string, bool) {
 	s = Clean(s)
 	if s == "" {
@@ -241,7 +231,7 @@ func Date(s string) (string, bool) {
 	return isoDate(numbers[2], month, day)
 }
 
-// Number parses a number written with either a decimal point or a decimal comma.
+// Number accepts a decimal point or a decimal comma.
 func Number(s string) (float64, bool) {
 	s = strings.ReplaceAll(Clean(s), " ", "")
 	if s == "" {
@@ -270,7 +260,6 @@ func Number(s string) (float64, bool) {
 	return f, true
 }
 
-// NumberFromAny parses a number from a decoded JSON value (number or text).
 func NumberFromAny(v any) (float64, bool) {
 	switch x := v.(type) {
 	case nil:
@@ -284,7 +273,6 @@ func NumberFromAny(v any) (float64, bool) {
 	}
 }
 
-// Text converts a decoded JSON value to cleaned text.
 func Text(v any) string {
 	switch x := v.(type) {
 	case nil:

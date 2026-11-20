@@ -8,9 +8,7 @@ SWAG := go run github.com/swaggo/swag/cmd/swag@v1.16.6
 help: ## Show the available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
 
-# migrate-up, migrate-down and seed run inside the backend image, on the
-# compose network. The database port is not published to the host, so they
-# work without a local PostgreSQL or Go toolchain.
+# migrate-up, migrate-down and seed run inside the backend image. The database port is not published.
 TOOL := docker compose run --rm --build --no-deps --entrypoint
 
 db-up: ## Start PostgreSQL/PostGIS and wait until it is healthy

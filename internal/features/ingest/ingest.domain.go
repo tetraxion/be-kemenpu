@@ -73,7 +73,9 @@ const (
 var (
 	ErrFollowUpMissing = apperror.NotFound("FOLLOW_UP_FILE_NOT_FOUND", FileFollowUp+" tidak ada di folder data")
 	ErrNotReady        = apperror.Unavailable("IMPORT_IN_PROGRESS", "impor data belum selesai")
+	// The cause is in the server log.
 	ErrImportFailed = apperror.Unavailable("IMPORT_FAILED", "impor data gagal, periksa log server")
+	// The file exists but is not a readable workbook.
 	ErrFollowUpUnreadable = apperror.Unprocessable("FOLLOW_UP_FILE_UNREADABLE", FileFollowUp+" tidak dapat dibaca sebagai berkas Excel")
 
 	ErrUploadMissing    = apperror.Invalid("UPLOAD_FILE_MISSING", "berkas tidak ditemukan pada kolom '"+UploadField+"'")
@@ -84,6 +86,7 @@ var (
 
 const (
 	UploadField = "berkas"
+	// 10 MB
 	MaxUploadBytes = 10 << 20
 )
 

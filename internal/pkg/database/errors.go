@@ -10,8 +10,7 @@ import (
 
 // IsUnavailable reports a failed connection, a network error or SQLSTATE class 08, 57P and 53.
 func IsUnavailable(err error) bool {
-	// A request that hit its own deadline also satisfies net.Error; that is
-	// the request timing out, not the database being down.
+	// A request that hit its own deadline also satisfies net.Error.
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 		return false
 	}

@@ -9,7 +9,6 @@ import (
 	"irrigation-server/internal/pkg/normalize"
 )
 
-
 func (r *Recorder) condition(sourceFile, rowRef, original string) string {
 	if strings.TrimSpace(original) == "" {
 		return ""

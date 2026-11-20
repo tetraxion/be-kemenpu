@@ -1,4 +1,4 @@
-// Package database provides the PostgreSQL (pgx) connection and transaction helper.
+// Package database provides the PostgreSQL connection and transaction helper.
 package database
 
 import (
@@ -11,17 +11,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// DBTX is satisfied by both *pgxpool.Pool and pgx.Tx, so a query helper can
-// run inside or outside a transaction.
+// DBTX is satisfied by both *pgxpool.Pool and pgx.Tx.
 type DBTX interface {
 	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
-// NewPool creates the pool without connecting. The HTTP server has to answer
-// GET /api/health with "memuat" from the first second, so it must not wait
-// for PostgreSQL; WaitReady does that in the background.
+// NewPool does not connect. WaitReady does that in the background.
 func NewPool(ctx context.Context, url string) (*pgxpool.Pool, error) {
 	cfg, err := pgxpool.ParseConfig(url)
 	if err != nil {
@@ -34,7 +31,6 @@ func NewPool(ctx context.Context, url string) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-// WaitReady pings until PostgreSQL accepts connections or the timeout passes.
 func WaitReady(ctx context.Context, pool *pgxpool.Pool, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -53,7 +49,6 @@ func WaitReady(ctx context.Context, pool *pgxpool.Pool, timeout time.Duration) e
 	}
 }
 
-// WithTx runs fn in one transaction and rolls back when fn returns an error.
 func WithTx(ctx context.Context, pool *pgxpool.Pool, fn func(tx pgx.Tx) error) error {
 	tx, err := pool.Begin(ctx)
 	if err != nil {

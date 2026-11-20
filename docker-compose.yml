@@ -1,8 +1,4 @@
-# The backend service with its database, as its own Compose project.
-# Start it from this folder: `make up` or `docker compose up --build`.
-#
-#   http://localhost:8081/api   the API, directly
-#   http://localhost:8080/api   the same API through the gateway of ../frontend
+# Backend and its database. Start with `make up` or `docker compose up --build`.
 name: be-irrigation
 
 services:
@@ -27,13 +23,11 @@ services:
       DATA_DIR: /data
       DATA_OVERRIDE_DIR: /data-override
     volumes:
-      # The source files ship with this service. They are mounted, not baked
-      # into the image.
+      # Mounted, not baked into the image.
       - ./data:/data:ro
       - ${DATA_OVERRIDE_PATH:-../data}:/data-override:ro
     ports:
-      # 8080 belongs to the gateway in ../frontend, which serves the interface
-      # and forwards /api here.
+      # Host port 8080 belongs to the gateway in ../frontend.
       - "${HTTP_PORT:-8081}:8080"
     depends_on:
       db:

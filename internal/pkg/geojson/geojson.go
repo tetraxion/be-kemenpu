@@ -15,7 +15,7 @@ type FeatureCollection struct {
 	Features []Feature `json:"features"`
 }
 
-// NewFeature builds a feature; a missing geometry is written as null.
+// NewFeature writes a missing geometry as null.
 func NewFeature(properties string, geometry *string) Feature {
 	f := Feature{Type: "Feature", Properties: json.RawMessage(properties), Geometry: json.RawMessage("null")}
 	if geometry != nil {
@@ -24,7 +24,7 @@ func NewFeature(properties string, geometry *string) Feature {
 	return f
 }
 
-// NewCollection wraps features; an empty list is written as [], never null.
+// NewCollection writes an empty list as [], never null.
 func NewCollection(features []Feature) FeatureCollection {
 	if features == nil {
 		features = []Feature{}
