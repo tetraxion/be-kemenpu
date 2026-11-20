@@ -62,6 +62,7 @@ func CleanReports(rows []datafile.Row, sourceFile string, ref Reference, rec *Re
 		}
 
 		if at, repeated := position[id]; repeated {
+			rec.Add(sourceFile, id, categoryRepeatedReportID, "id_laporan muncul lebih dari sekali dalam satu berkas", "Baris terakhir dipakai")
 			reports[at] = report
 		} else {
 			position[id] = len(reports)

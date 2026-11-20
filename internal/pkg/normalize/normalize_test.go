@@ -74,27 +74,32 @@ func TestAssetKind(t *testing.T) {
 
 func TestDate(t *testing.T) {
 	cases := map[string]string{
-		"2024-05-28":          "2024-05-28",
-		"31-12-2025":          "2025-12-31",
-		"14/06/2025":          "2025-06-14",
-		"2025/03/12":          "2025-03-12",
-		"6/1/2026":            "2026-01-06", // ambiguous: day first
-		"08-03-2026":          "2026-03-08",
-		"1 Juli 2026":         "2026-07-01",
-		"10 November 2025":    "2025-11-10",
-		"22 Agustus 2026":     "2026-08-22",
-		"4 Februari 2025":     "2025-02-04",
-		"03/25/2026":          "2026-03-25", // not ambiguous: month first
-		"46246":               "2026-08-12", // Excel serial date
-		"2026-08-12 00:00:00": "2026-08-12",
-		"2026-08-12T00:00:00": "2026-08-12",
+		"2024-05-28":             "2024-05-28",
+		"31-12-2025":             "2025-12-31",
+		"14/06/2025":             "2025-06-14",
+		"2025/03/12":             "2025-03-12",
+		"6/1/2026":               "2026-01-06", // ambiguous: day first
+		"08-03-2026":             "2026-03-08",
+		"1 Juli 2026":            "2026-07-01",
+		"10 November 2025":       "2025-11-10",
+		"22 Agustus 2026":        "2026-08-22",
+		"4 Februari 2025":        "2025-02-04",
+		"03/25/2026":             "2026-03-25", // not ambiguous: month first
+		"46246":                  "2026-08-12", // Excel serial date
+		"2026-08-12 00:00:00":    "2026-08-12",
+		"2026-08-12T00:00:00":    "2026-08-12",
+		"14/08/2026 10:30":       "2026-08-14",
+		"14-08-2026T10:00:00":    "2026-08-14",
+		"Jumat, 14 Agustus 2026": "2026-08-14",
+		"20260814":               "2026-08-14",
+		"14082026":               "2026-08-14",
 	}
 	for in, want := range cases {
 		got, ok := Date(in)
 		assert.True(t, ok, "input %q", in)
 		assert.Equal(t, want, got, "input %q", in)
 	}
-	for _, bad := range []string{"", "31/02/2026", "besok", "12/2026"} {
+	for _, bad := range []string{"", "31/02/2026", "besok", "12/2026", "2026", "7"} {
 		_, ok := Date(bad)
 		assert.False(t, ok, "input %q must fail", bad)
 	}
@@ -134,4 +139,41 @@ func TestReportStatusAndCanalLevel(t *testing.T) {
 	level, ok := CanalLevel(" Sekunder")
 	assert.True(t, ok)
 	assert.Equal(t, "sekunder", level)
+}
+
+func TestOtherSpellingsFallBackOnKeywords(t *testing.T) {
+	conditions := map[string]string{
+		"Rusak Berat (RB)": ConditionHeavy,
+		"R. Ringan":        ConditionLight,
+		"sedang":           ConditionModerate,
+		"Kondisi Baik":     ConditionGood,
+	}
+	for in, want := range conditions {
+		got, ok := Condition(in)
+		assert.True(t, ok, "input %q", in)
+		assert.Equal(t, want, got, "input %q", in)
+	}
+	for _, bad := range []string{"tidak baik", "kurang baik", "?"} {
+		_, ok := Condition(bad)
+		assert.False(t, ok, "input %q must stay unknown", bad)
+	}
+
+	kinds := map[string]string{
+		"Bendung Tetap":               KindWeir,
+		"Bangunan Bagi dan Sadap":     KindDivisionOfftake,
+		"B. Bagi":                     KindDivision,
+		"Bang. Sadap":                 KindOfftake,
+		"Syphon":                      KindAuxiliary,
+		"Bangunan Terjun":             KindAuxiliary,
+		"Bangunan Pelengkap (Talang)": KindAuxiliary,
+	}
+	for in, want := range kinds {
+		got, ok := AssetKind(in)
+		assert.True(t, ok, "input %q", in)
+		assert.Equal(t, want, got, "input %q", in)
+	}
+
+	level, ok := CanalLevel("Saluran Primer")
+	assert.True(t, ok)
+	assert.Equal(t, "primer", level)
 }

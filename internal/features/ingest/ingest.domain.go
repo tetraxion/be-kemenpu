@@ -56,6 +56,7 @@ const (
 	categoryDecimalComma       = "angka_koma_desimal"
 	categoryUnreadableGeom     = "geometri_tidak_terbaca"
 	categoryMissingID          = "pengenal_kosong"
+	categoryRepeatedReportID   = "id_laporan_berulang"
 	categoryOfftakeByDistance  = "petak_sadap_dari_jarak"
 	categoryReportByDistance   = "laporan_dicocokkan_dari_jarak"
 	categoryReportCoordIgnored = "koordinat_laporan_diabaikan"

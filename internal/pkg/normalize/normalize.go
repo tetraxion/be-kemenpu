@@ -81,8 +81,22 @@ var conditions = map[string]string{
 
 // Condition maps variants such as "RR" or "Rusak Ringan" to the canonical value.
 func Condition(s string) (string, bool) {
-	c, ok := conditions[lettersOnly(s)]
-	return c, ok
+	key := lettersOnly(s)
+	if c, ok := conditions[key]; ok {
+		return c, true
+	}
+	// other spellings, such as "Rusak Berat (RB)" or "R. Ringan"
+	switch {
+	case strings.Contains(key, "berat"):
+		return ConditionHeavy, true
+	case strings.Contains(key, "sedang"):
+		return ConditionModerate, true
+	case strings.Contains(key, "ringan"):
+		return ConditionLight, true
+	case strings.Contains(key, "baik") && !strings.Contains(key, "tidak") && !strings.Contains(key, "kurang"):
+		return ConditionGood, true
+	}
+	return "", false
 }
 
 // ConditionWeight is the priority-score weight of a condition.
@@ -116,18 +130,41 @@ var assetKinds = map[string]string{
 	"terjunan":          KindAuxiliary,
 }
 
+var auxiliaryWords = []string{"pelengkap", "gorong", "talang", "siphon", "syphon", "sipon", "sifon", "terjun"}
+
 func AssetKind(s string) (string, bool) {
-	k, ok := assetKinds[lettersOnly(s)]
-	return k, ok
+	key := lettersOnly(s)
+	if k, ok := assetKinds[key]; ok {
+		return k, true
+	}
+	// other spellings, such as "Bendung Tetap" or "Bangunan Bagi dan Sadap"
+	for _, word := range auxiliaryWords {
+		if strings.Contains(key, word) {
+			return KindAuxiliary, true
+		}
+	}
+	divides, taps := strings.Contains(key, "bagi"), strings.Contains(key, "sadap")
+	switch {
+	case strings.Contains(key, "bendung"):
+		return KindWeir, true
+	case divides && taps:
+		return KindDivisionOfftake, true
+	case divides:
+		return KindDivision, true
+	case taps:
+		return KindOfftake, true
+	}
+	return "", false
 }
 
 func CanalLevel(s string) (string, bool) {
-	switch level := lettersOnly(s); level {
-	case "primer", "sekunder":
-		return level, true
-	default:
-		return strings.ToLower(Clean(s)), false
+	level := lettersOnly(s)
+	for _, known := range []string{"primer", "sekunder"} {
+		if strings.Contains(level, known) {
+			return known, true
+		}
 	}
+	return strings.ToLower(Clean(s)), false
 }
 
 // ReportStatus treats anything that is not a cancellation as active.
@@ -156,7 +193,8 @@ var months = map[string]int{
 
 var (
 	dateSeparator = regexp.MustCompile(`[\s/\-.,]+`)
-	dateWithTime  = regexp.MustCompile(`^(\d{4}-\d{1,2}-\d{1,2})[T ]\d{1,2}:.*$`)
+	timeOfDay     = regexp.MustCompile(`[T ]\d{1,2}:\d{2}.*$`)
+	weekday       = regexp.MustCompile(`(?i)^(senin|selasa|rabu|kamis|jum'?at|sabtu|minggu|ahad|mon|tue|wed|thu|fri|sat|sun)[a-z]*[,\s]+`)
 	excelEpoch    = time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
 )
 
@@ -180,17 +218,23 @@ func Date(s string) (string, bool) {
 	if s == "" {
 		return "", false
 	}
-	if m := dateWithTime.FindStringSubmatch(s); m != nil {
-		s = m[1]
-	}
+	s = Clean(weekday.ReplaceAllString(timeOfDay.ReplaceAllString(s, ""), ""))
 	if f, err := strconv.ParseFloat(s, 64); err == nil {
 		if len(s) == 8 && !strings.ContainsAny(s, ".eE") { // YYYYMMDD
 			year, _ := strconv.Atoi(s[:4])
 			month, _ := strconv.Atoi(s[4:6])
 			day, _ := strconv.Atoi(s[6:])
+			if date, ok := isoDate(year, month, day); ok {
+				return date, true
+			}
+			// DDMMYYYY
+			day, _ = strconv.Atoi(s[:2])
+			month, _ = strconv.Atoi(s[2:4])
+			year, _ = strconv.Atoi(s[4:])
 			return isoDate(year, month, day)
 		}
-		if f >= 1 && f < 200000 {
+		// serials of 1927 to 2173; a smaller number is not a date
+		if f >= 10000 && f < 100000 {
 			return excelEpoch.AddDate(0, 0, int(math.Floor(f))).Format(time.DateOnly), true
 		}
 		return "", false
