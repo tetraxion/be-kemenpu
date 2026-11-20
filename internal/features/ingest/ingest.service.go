@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -146,9 +147,43 @@ func (s *service) ImportFollowUp(ctx context.Context) (Summary, error) {
 	if err != nil {
 		return Summary{}, ErrFollowUpUnreadable.Wrap(err)
 	}
+	return s.applyFollowUp(ctx, rows)
+}
 
+func (s *service) ImportFollowUpFrom(ctx context.Context, workbook io.Reader) (Summary, error) {
+	if s.Status() != StatusReady {
+		return Summary{}, ErrNotReady
+	}
+	// Parse before taking the lock: a slow upload must not hold up other imports.
+	rows, err := ReadXLSXFrom(workbook, "uploaded workbook")
+	if err != nil {
+		return Summary{}, ErrUploadUnreadable.Wrap(err)
+	}
+	// Any workbook opens fine, so check that this one is a report file before
+	// its rows are recorded as findings.
+	if len(rows) > 0 && !hasColumn(rows, "id_laporan") {
+		return Summary{}, ErrUploadNotReports
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.applyFollowUp(ctx, rows)
+}
+
+func hasColumn(rows []Row, name string) bool {
+	for _, row := range rows {
+		if _, ok := row[name]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// applyFollowUp cleans and stores follow-up rows. The caller holds s.mu. An
+// uploaded file is recorded under the same source name as the one in the data
+// folder: both are the follow-up file, so repeating either stays idempotent.
+func (s *service) applyFollowUp(ctx context.Context, rows []Row) (Summary, error) {
 	var summary Summary
-	err = s.repo.FollowUp(ctx, func(ref Reference, existing map[string]Report) FollowUpChange {
+	err := s.repo.FollowUp(ctx, func(ref Reference, existing map[string]Report) FollowUpChange {
 		rec := &Recorder{}
 		var upserts []Report
 		summary, upserts = ClassifyFollowUp(CleanReports(rows, FileFollowUp, ref, rec), existing)

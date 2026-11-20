@@ -1,6 +1,7 @@
 package ingest
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -9,12 +10,14 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xuri/excelize/v2"
 )
 
 // fakeRepo keeps what the service asks to store, without a database.
@@ -204,6 +207,55 @@ func TestImportFollowUpRejectsAnUnreadableFile(t *testing.T) {
 
 	require.ErrorIs(t, err, ErrFollowUpUnreadable)
 	assert.NotNil(t, errors.Unwrap(err), "the parser error is kept for the log")
+}
+
+// workbook builds an .xlsx in memory from a header and its rows.
+func workbook(t *testing.T, table ...[]any) *bytes.Buffer {
+	t.Helper()
+	f := excelize.NewFile()
+	defer f.Close()
+	for i, row := range table {
+		cell, err := excelize.CoordinatesToCellName(1, i+1)
+		require.NoError(t, err)
+		require.NoError(t, f.SetSheetRow("Sheet1", cell, &row))
+	}
+	var out bytes.Buffer
+	require.NoError(t, f.Write(&out))
+	return &out
+}
+
+func TestImportFollowUpFromAnUploadedWorkbook(t *testing.T) {
+	repo := &fakeRepo{}
+	svc := NewService(repo, writeDataDir(t), quietLog())
+	header := []any{"id_laporan", "tanggal", "petugas", "nomenklatur", "jenis_kerusakan", "kondisi", "lat", "lon", "status", "keterangan"}
+	report := []any{"LP-9001", "2026-03-01", "Juru Uji", "bkw 1", "retak", "RB", "", "", "aktif", ""}
+
+	_, err := svc.ImportFollowUpFrom(context.Background(), workbook(t, header, report))
+	assert.ErrorIs(t, err, ErrNotReady, "an upload waits for the initial import too")
+
+	svc.Run(context.Background())
+
+	first, err := svc.ImportFollowUpFrom(context.Background(), workbook(t, header, report))
+	require.NoError(t, err)
+	assert.Equal(t, Summary{Added: 1}, first)
+	assert.Equal(t, FileFollowUp, repo.lastChange.SourceFile)
+	require.Contains(t, repo.reports, "LP-9001")
+	assert.Equal(t, "KW-0002", repo.reports["LP-9001"].AssetCode, "the same cleaning rules match the report to its asset")
+
+	again, err := svc.ImportFollowUpFrom(context.Background(), workbook(t, header, report))
+	require.NoError(t, err)
+	assert.Equal(t, Summary{Unchanged: 1}, again, "uploading the same file twice changes nothing")
+}
+
+func TestImportFollowUpFromRejectsOtherFiles(t *testing.T) {
+	svc := NewService(&fakeRepo{}, writeDataDir(t), quietLog())
+	svc.Run(context.Background())
+
+	_, err := svc.ImportFollowUpFrom(context.Background(), strings.NewReader("this is not a workbook"))
+	assert.ErrorIs(t, err, ErrUploadUnreadable)
+
+	_, err = svc.ImportFollowUpFrom(context.Background(), workbook(t, []any{"nama", "alamat"}, []any{"Budi", "Sleman"}))
+	assert.ErrorIs(t, err, ErrUploadNotReports, "a workbook without id_laporan is not a report file")
 }
 
 // panickyRepo panics where a real repository would talk to the database.

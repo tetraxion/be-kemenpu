@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -81,6 +82,21 @@ func ReadXLSX(path string) ([]Row, error) {
 		return nil, fmt.Errorf("ingest: open %s: %w", path, err)
 	}
 	defer f.Close()
+	return workbookRows(f, path)
+}
+
+// ReadXLSXFrom reads the first sheet of a workbook that is not on disk, such
+// as an uploaded file. name only labels the error.
+func ReadXLSXFrom(r io.Reader, name string) ([]Row, error) {
+	f, err := excelize.OpenReader(r)
+	if err != nil {
+		return nil, fmt.Errorf("ingest: open %s: %w", name, err)
+	}
+	defer f.Close()
+	return workbookRows(f, name)
+}
+
+func workbookRows(f *excelize.File, path string) ([]Row, error) {
 	sheets := f.GetSheetList()
 	if len(sheets) == 0 {
 		return nil, fmt.Errorf("ingest: %s has no sheet", path)

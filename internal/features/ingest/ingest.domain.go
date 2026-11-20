@@ -81,6 +81,20 @@ var (
 	ErrImportFailed = apperror.Unavailable("IMPORT_FAILED", "impor data gagal, periksa log server")
 	// ErrFollowUpUnreadable: the file exists but is not a readable workbook.
 	ErrFollowUpUnreadable = apperror.Unprocessable("FOLLOW_UP_FILE_UNREADABLE", FileFollowUp+" tidak dapat dibaca sebagai berkas Excel")
+
+	// Errors of the optional upload (multipart field UploadField).
+	ErrUploadMissing    = apperror.Invalid("UPLOAD_FILE_MISSING", "berkas tidak ditemukan pada kolom '"+UploadField+"'")
+	ErrUploadTooLarge   = apperror.Invalid("UPLOAD_FILE_TOO_LARGE", "ukuran berkas melebihi 10 MB")
+	ErrUploadUnreadable = apperror.Unprocessable("UPLOAD_FILE_UNREADABLE", "berkas yang diunggah tidak dapat dibaca sebagai berkas Excel (.xlsx)")
+	// ErrUploadNotReports: a readable workbook that is not a report file.
+	ErrUploadNotReports = apperror.Unprocessable("UPLOAD_FILE_NOT_REPORTS", "berkas yang diunggah tidak memuat kolom id_laporan")
+)
+
+const (
+	// UploadField is the multipart field that carries an uploaded follow-up file.
+	UploadField = "berkas"
+	// MaxUploadBytes bounds an uploaded follow-up file.
+	MaxUploadBytes = 10 << 20
 )
 
 // Finding records one cleaning action on one source row or feature.

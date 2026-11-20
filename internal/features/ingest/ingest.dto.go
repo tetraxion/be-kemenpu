@@ -1,6 +1,9 @@
 package ingest
 
-import "context"
+import (
+	"context"
+	"io"
+)
 
 // ---- response ----
 
@@ -22,6 +25,9 @@ type Service interface {
 	// ImportFollowUp imports laporan_susulan.xlsx. Calling it again leaves
 	// the same final state and reports every row as unchanged.
 	ImportFollowUp(ctx context.Context) (Summary, error)
+	// ImportFollowUpFrom applies the same import to an uploaded workbook
+	// instead of the file in the data folder.
+	ImportFollowUpFrom(ctx context.Context, workbook io.Reader) (Summary, error)
 	Status() string
 	// MarkFailed records that startup could not reach the point of importing
 	// (e.g. the database never came up).
