@@ -8,7 +8,6 @@ import (
 	"irrigation-server/internal/pkg/normalize"
 )
 
-// GeoJSON builds the WGS84 geometry of the segment.
 func (c Canal) GeoJSON() string {
 	if len(c.Parts) == 1 {
 		return geometryJSON("LineString", positions(c.Parts[0]))
@@ -46,8 +45,7 @@ func parseLines(f Feature) (parts [][]geo.LonLat, fromUTM, swapped, ok bool) {
 	return parts, fromUTM, swapped, len(parts) > 0
 }
 
-// sameLine reports whether two lines coincide vertex by vertex, in either
-// drawing direction.
+// sameLine ignores drawing direction.
 func sameLine(a, b []geo.Point) bool {
 	if len(a) != len(b) {
 		return false
@@ -72,9 +70,7 @@ func sameGeometry(a, b [][]geo.Point) bool {
 	return true
 }
 
-// CleanCanals normalises attributes, repairs coordinates, and drops segments
-// whose geometry repeats an earlier one. The drawing direction is ignored,
-// because the source does not draw segments in flow direction.
+// CleanCanals drops repeated geometry. The source does not draw segments in flow direction.
 func CleanCanals(features []Feature, rec *Recorder) []Canal {
 	var canals []Canal
 	for i, f := range features {

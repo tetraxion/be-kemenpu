@@ -11,8 +11,7 @@ import (
 	"irrigation-server/internal/pkg/geo"
 )
 
-// origin is a point inside the UTM 49S zone; test geometry is laid out in
-// metres around it and converted to whatever the source file would contain.
+// Test geometry is laid out in metres around origin, a point inside UTM zone 49S.
 var origin = geo.Point{X: 430000, Y: 9155000}
 
 func at(dx, dy float64) geo.Point { return geo.Point{X: origin.X + dx, Y: origin.Y + dy} }
@@ -26,7 +25,6 @@ func coordinates(t *testing.T, v any) json.RawMessage {
 	return b
 }
 
-// lineFeature builds a LineString feature in WGS84 from metre offsets.
 func lineFeature(t *testing.T, code, condition string, offsets ...[2]float64) Feature {
 	t.Helper()
 	var line [][2]float64
@@ -153,7 +151,6 @@ func TestCleanAssetsKeepsTheLatestOfADuplicatedCode(t *testing.T) {
 	assert.Equal(t, 2, categories(rec)[CategoryDuplicateAsset])
 }
 
-// squareFeature builds a square plot of the given side (metres) in WGS84.
 func squareFeature(t *testing.T, code string, area any, offtake string, x, y, side float64, close bool) Feature {
 	t.Helper()
 	corners := [][2]float64{{x, y}, {x + side, y}, {x + side, y + side}, {x, y + side}}
@@ -171,7 +168,6 @@ func squareFeature(t *testing.T, code string, area any, offtake string, x, y, si
 	}
 }
 
-// fakeRepair stands in for PostGIS: it reports the polygon as valid with a fixed area.
 func fakeRepair(areaM2 float64, wasValid bool) PolygonRepairer {
 	return func(string) (PolygonRepair, error) {
 		return PolygonRepair{WasValid: wasValid, GeomHex: "00", AreaM2: areaM2}, nil
@@ -249,7 +245,7 @@ func TestCleanReportsMatchesByNomenclatureThenDistance(t *testing.T) {
 		{"id_laporan": "LP-3", "tanggal": "2026-08-01", "nomenklatur": "B.XZ.7", "kondisi": "rs", "status": "Batal",
 			"lat": fmt.Sprintf("%.7f", away.Lat), "lon": fmt.Sprintf("%.7f", away.Lon)},
 		{"id_laporan": "LP-4", "tanggal": "2026-08-01", "nomenklatur": "B.XQ.5", "kondisi": "rs"},
-		// lat/lon columns swapped: still resolves to KW-0002.
+		// lat/lon columns swapped
 		{"id_laporan": "LP-5", "tanggal": "1/9/2026", "nomenklatur": "B.ZZ.1", "kondisi": "baik",
 			"lat": fmt.Sprintf("%.7f", near.Lon), "lon": fmt.Sprintf("%.7f", near.Lat)},
 	}
@@ -301,7 +297,6 @@ func TestClassifyFollowUp(t *testing.T) {
 	assert.Equal(t, Summary{Added: 1, Updated: 1, Cancelled: 1, Unchanged: 1}, summary)
 	assert.Len(t, upserts, 3, "an unchanged report is not written again")
 
-	// Applying the same file to the resulting state changes nothing.
 	for _, r := range upserts {
 		existing[r.ID] = r
 	}
@@ -310,8 +305,7 @@ func TestClassifyFollowUp(t *testing.T) {
 	assert.Empty(t, upsertsAgain)
 }
 
-// TestAnalyzeMatchesTheAssignmentExample reproduces the worked example:
-// B.KW.2 affects four plots totalling 150 ha, and KW.1.Ki upstream is spared.
+// Worked example: B.KW.2 affects four plots totalling 150 ha, KW.1.Ki upstream is spared.
 func TestAnalyzeMatchesTheAssignmentExample(t *testing.T) {
 	var canals []Canal
 	for _, line := range exampleLines() {

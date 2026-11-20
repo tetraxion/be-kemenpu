@@ -9,9 +9,7 @@ import (
 	"irrigation-server/internal/pkg/normalize"
 )
 
-// Helpers shared by the canal, asset, plot and report cleaners.
 
-// condition normalises a condition and records the outcome; "" when unknown.
 func (r *Recorder) condition(sourceFile, rowRef, original string) string {
 	if strings.TrimSpace(original) == "" {
 		return ""
@@ -25,7 +23,6 @@ func (r *Recorder) condition(sourceFile, rowRef, original string) string {
 	return c
 }
 
-// date normalises a date and records the outcome; "" when unreadable.
 func (r *Recorder) date(sourceFile, rowRef, column, original string) string {
 	if strings.TrimSpace(original) == "" {
 		return ""
@@ -39,8 +36,7 @@ func (r *Recorder) date(sourceFile, rowRef, column, original string) string {
 	return d
 }
 
-// pair reads two coordinate columns (x = longitude/easting, y =
-// latitude/northing). When the pair is unusable it returns the reason.
+// x = longitude or easting, y = latitude or northing
 func (r *Recorder) pair(sourceFile, rowRef, x, y string) (geo.Coordinate, string) {
 	if strings.TrimSpace(x) == "" || strings.TrimSpace(y) == "" {
 		return geo.Coordinate{}, "Koordinat kosong"
@@ -64,7 +60,6 @@ func (r *Recorder) pair(sourceFile, rowRef, x, y string) (geo.Coordinate, string
 	return c, ""
 }
 
-// fixSequence repairs a raw [x, y] vertex list.
 func fixSequence(raw [][]float64, fromUTM, swapped *bool) ([]geo.LonLat, bool) {
 	out := make([]geo.LonLat, 0, len(raw))
 	for _, v := range raw {

@@ -16,12 +16,7 @@ func distanceToBoundary(p geo.Point, rings [][]geo.Point) float64 {
 	return nearest
 }
 
-// Analyze assigns an offtake structure to every plot, orients the network
-// from the weir, and computes the plots and area each structure affects.
-//
-// A plot is affected by structure X when the water path from the weir to the
-// plot's offtake passes through X, including the plots tapped at X itself.
-// Structures without a position on the network keep an impacted area of 0.
+// Analyze: a plot is affected by X when the water path from the weir to its offtake passes through X.
 func Analyze(canals []Canal, assets []*Asset, plots []*Plot, rec *Recorder) {
 	byNomenclature := map[string]*Asset{}
 	for _, a := range assets {

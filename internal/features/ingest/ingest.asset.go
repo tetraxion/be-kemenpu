@@ -21,9 +21,7 @@ func distanceToCanals(p geo.Point, canals []Canal) float64 {
 	return nearest
 }
 
-// CleanAssets normalises the inventory, keeps the most recently updated row
-// of each repeated kode_aset, and flags locations by their distance to the
-// nearest canal. Assets come back ordered by code.
+// CleanAssets keeps the latest row of each repeated kode_aset.
 func CleanAssets(rows []Row, canals []Canal, rec *Recorder) []*Asset {
 	byCode := map[string]*Asset{}
 	var codes []string

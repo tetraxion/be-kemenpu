@@ -39,8 +39,7 @@ func (h *Handler) ImportFollowUp(c *gin.Context) {
 		summary Summary
 		err     error
 	)
-	// Only a multipart request is an upload. Anything else, including the
-	// empty body the contract describes, reads the data folder.
+	// Only a multipart request is an upload. Anything else reads the data folder.
 	if strings.HasPrefix(c.ContentType(), "multipart/") {
 		summary, err = h.importUpload(c)
 	} else {
@@ -54,7 +53,7 @@ func (h *Handler) ImportFollowUp(c *gin.Context) {
 }
 
 func (h *Handler) importUpload(c *gin.Context) (Summary, error) {
-	// The limit covers the whole body; the form overhead is a few hundred bytes.
+	// The limit covers the whole body, form overhead included.
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MaxUploadBytes+1<<10)
 	header, err := c.FormFile(UploadField)
 	if err != nil {
