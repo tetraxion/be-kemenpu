@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"log/slog"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,8 +20,9 @@ import (
 
 // stubIngest is an ingest service with a settable status and no database.
 type stubIngest struct {
-	status  string
-	summary ingest.Summary
+	status   string
+	summary  ingest.Summary
+	uploaded string
 }
 
 func (s *stubIngest) Run(context.Context) {}
@@ -26,6 +30,11 @@ func (s *stubIngest) Status() string      { return s.status }
 func (s *stubIngest) MarkFailed()         { s.status = ingest.StatusFailed }
 func (s *stubIngest) ImportFollowUp(context.Context) (ingest.Summary, error) {
 	return s.summary, nil
+}
+func (s *stubIngest) ImportFollowUpFrom(_ context.Context, workbook io.Reader) (ingest.Summary, error) {
+	content, err := io.ReadAll(workbook)
+	s.uploaded = string(content)
+	return s.summary, err
 }
 
 func request(t *testing.T, h http.Handler, method, target string) (int, map[string]any) {
@@ -72,6 +81,43 @@ func TestFollowUpImportFollowsTheContract(t *testing.T) {
 	status, body := request(t, router, http.MethodPost, "/api/impor/susulan")
 	assert.Equal(t, http.StatusOK, status)
 	assert.Equal(t, map[string]any{"ditambah": 14.0, "diubah": 6.0, "dibatalkan": 3.0, "tidak_berubah": 0.0}, body)
+}
+
+func uploadRequest(t *testing.T, h http.Handler, field string, content []byte) (int, map[string]any) {
+	t.Helper()
+	var form bytes.Buffer
+	w := multipart.NewWriter(&form)
+	part, err := w.CreateFormFile(field, "laporan.xlsx")
+	require.NoError(t, err)
+	_, err = part.Write(content)
+	require.NoError(t, err)
+	require.NoError(t, w.Close())
+
+	req := httptest.NewRequest(http.MethodPost, "/api/impor/susulan", &form)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body), "body: %s", rec.Body.String())
+	return rec.Code, body
+}
+
+func TestFollowUpUploadIsOptional(t *testing.T) {
+	svc := &stubIngest{status: ingest.StatusReady, summary: ingest.Summary{Added: 2}}
+	router := newRouter(config.Config{AppEnv: "production"}, slog.Default(), nil, svc)
+
+	status, body := uploadRequest(t, router, ingest.UploadField, []byte("workbook bytes"))
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, 2.0, body["ditambah"], "an upload answers in the contract shape")
+	assert.Equal(t, "workbook bytes", svc.uploaded, "the uploaded file reaches the service")
+
+	status, body = uploadRequest(t, router, "lampiran", []byte("workbook bytes"))
+	assert.Equal(t, http.StatusBadRequest, status)
+	assert.Equal(t, "UPLOAD_FILE_MISSING", body["error"].(map[string]any)["code"])
+
+	status, body = uploadRequest(t, router, ingest.UploadField, make([]byte, ingest.MaxUploadBytes+2<<10))
+	assert.Equal(t, http.StatusBadRequest, status)
+	assert.Equal(t, "UPLOAD_FILE_TOO_LARGE", body["error"].(map[string]any)["code"])
 }
 
 func TestUnknownRouteAnswersJSON(t *testing.T) {

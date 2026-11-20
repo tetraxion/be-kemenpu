@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,6 +26,9 @@ func (s *stubService) MarkFailed()         { s.status = ingest.StatusFailed }
 func (s *stubService) ImportFollowUp(context.Context) (ingest.Summary, error) {
 	s.followed++
 	return ingest.Summary{Added: 1}, s.followUpErr
+}
+func (s *stubService) ImportFollowUpFrom(context.Context, io.Reader) (ingest.Summary, error) {
+	return ingest.Summary{}, nil
 }
 
 func TestSeedImportsTheDataFolderOnly(t *testing.T) {
