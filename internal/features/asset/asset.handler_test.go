@@ -54,8 +54,6 @@ func newTestRouter(svc Service) *gin.Engine {
 	return r
 }
 
-// get performs a request and decodes the JSON body into generic values, so
-// the assertions see exactly the property names a client would.
 func get(t *testing.T, r http.Handler, target string) (int, map[string]any) {
 	t.Helper()
 	rec := httptest.NewRecorder()

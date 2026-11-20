@@ -1,5 +1,4 @@
-// Package asset serves irrigation structures: the list, one structure with
-// its report history, its downstream impact, and the maintenance priority.
+// Package asset serves irrigation structures.
 package asset
 
 import (
@@ -8,11 +7,8 @@ import (
 	"irrigation-server/internal/pkg/apperror"
 )
 
-// DefaultPriorityLimit is the number of priority rows returned when the
-// caller gives no limit.
 const DefaultPriorityLimit = 20
 
-// Asset is one irrigation structure with its latest condition.
 type Asset struct {
 	Code          string
 	Nomenclature  *string
@@ -24,7 +20,6 @@ type Asset struct {
 	Flags         []string
 }
 
-// Report is one field report matched to a structure.
 type Report struct {
 	ID           string
 	ReportedOn   *string
@@ -37,27 +32,24 @@ type Report struct {
 	Note         *string
 }
 
-// ImpactedPlot is a tertiary plot that loses water when the structure fails.
 type ImpactedPlot struct {
 	Code   string
 	AreaHa float64
 }
 
-// Impact is the downstream impact of one structure.
 type Impact struct {
 	AssetCode   string
 	TotalAreaHa float64
 	Plots       []ImpactedPlot
 }
 
-// PriorityCandidate is a structure that affects at least one plot.
+// PriorityCandidate affects at least one plot.
 type PriorityCandidate struct {
 	Code           string
 	Condition      string
 	ImpactedAreaHa float64
 }
 
-// Priority is one row of the maintenance priority list.
 type Priority struct {
 	Rank int
 	PriorityCandidate
@@ -73,8 +65,7 @@ type ListFilter struct {
 type Repository interface {
 	List(ctx context.Context, f ListFilter) ([]Asset, error)
 	Get(ctx context.Context, code string) (Asset, error)
-	// Reports returns every report matched to the structure, cancelled ones
-	// included, newest first. Reports dropped as duplicates are left out.
+	// Reports includes cancelled reports but not duplicates, newest first.
 	Reports(ctx context.Context, code string) ([]Report, error)
 	ImpactedPlots(ctx context.Context, code string) ([]ImpactedPlot, error)
 	PriorityCandidates(ctx context.Context) ([]PriorityCandidate, error)

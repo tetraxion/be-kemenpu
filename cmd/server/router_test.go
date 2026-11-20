@@ -18,7 +18,6 @@ import (
 	"irrigation-server/internal/pkg/config"
 )
 
-// stubIngest is an ingest service with a settable status and no database.
 type stubIngest struct {
 	status   string
 	summary  ingest.Summary

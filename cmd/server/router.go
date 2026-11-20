@@ -28,19 +28,15 @@ var (
 	errMethodNotAllowed = apperror.MethodNotAllowed("METHOD_NOT_ALLOWED", "metode HTTP tidak didukung untuk alamat ini")
 )
 
-// newRouter assembles the middleware and every feature. New features are registered here.
 func newRouter(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool, ingestSvc ingest.Service) *gin.Engine {
 	if cfg.IsProduction() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	r := gin.New()
-	// Gin trusts every proxy by default, which lets any client forge its
-	// address through X-Forwarded-For. Nothing here needs forwarded addresses.
-	// The error is for unparsable addresses; nil has none.
+	// Gin trusts every proxy by default, which lets clients forge X-Forwarded-For.
 	_ = r.SetTrustedProxies(nil)
-	// Without this a wrong method on a known address answers 404, which hides
-	// the real mistake (e.g. GET on the POST-only follow-up import).
+	// Otherwise a wrong method answers 404 instead of 405.
 	r.HandleMethodNotAllowed = true
 	r.Use(
 		middleware.RequestID(),
@@ -58,10 +54,10 @@ func newRouter(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool, ingestSv
 	}
 
 	api := r.Group("/api")
-	// The status probe answers at any time, including while the import runs.
+	// Answers while the import runs.
 	health.RegisterRoutes(api, health.NewHandler(ingestSvc))
 
-	// Everything else reads imported data, so it waits for the import.
+	// Everything else waits for the import.
 	ready := api.Group("", requireReady(ingestSvc))
 	ingest.RegisterRoutes(ready, ingest.NewHandler(ingestSvc))
 	asset.RegisterRoutes(ready, asset.NewHandler(asset.NewService(asset.NewRepository(pool))))
@@ -72,8 +68,6 @@ func newRouter(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool, ingestSv
 	return r
 }
 
-// requireReady answers 503 until the initial import has finished, and says
-// so plainly when the import failed, so a client does not keep waiting.
 func requireReady(status health.StatusProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		switch status.Status() {
@@ -87,8 +81,6 @@ func requireReady(status health.StatusProvider) gin.HandlerFunc {
 	}
 }
 
-// serviceIndex answers the bare address with where to go next. This service
-// is the API only; the web interface is a separate service.
 func serviceIndex(cfg config.Config) gin.HandlerFunc {
 	index := gin.H{
 		"service": "irrigation-server",

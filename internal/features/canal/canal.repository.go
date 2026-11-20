@@ -17,8 +17,7 @@ func NewRepository(pool *pgxpool.Pool) Repository {
 	return &repository{pool: pool}
 }
 
-// unknown labels a level or condition that could not be normalised, so its
-// length is still visible in the recap instead of silently dropped.
+// unknown keeps unnormalised levels and conditions visible in the recap.
 const unknown = "tidak_diketahui"
 
 func (r *repository) Recap(ctx context.Context) ([]Recap, error) {

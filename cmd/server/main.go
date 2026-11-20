@@ -1,8 +1,5 @@
 // Command server runs the irrigation network condition API.
 //
-// On startup it imports the data folder in the background while the HTTP
-// server already answers GET /api/health with "memuat".
-//
 //	@title				Irrigation Network Condition API
 //	@version			1.0.0
 //	@description		Combines the asset inventory, field reports and network map of an irrigation area into one picture of network condition, to help set maintenance priorities.
@@ -70,14 +67,13 @@ func run() error {
 	srv := &http.Server{
 		Addr:    cfg.HTTPAddr,
 		Handler: newRouter(cfg, log, pool, ingestSvc),
-		// A client that never finishes its headers must not hold a connection forever.
+		// Slow clients must not hold a connection forever.
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 	if cfg.RequestTimeout > 0 {
-		// The Timeout middleware answers 504 at RequestTimeout; the write
-		// deadline sits just behind it so that answer can still be sent.
+		// Just behind RequestTimeout, so the 504 can still be sent.
 		srv.WriteTimeout = cfg.RequestTimeout + 10*time.Second
 	}
 
@@ -106,8 +102,7 @@ func run() error {
 	defer cancel()
 	err = srv.Shutdown(shutdownCtx)
 
-	// The import stops when ctx is cancelled. Wait for it, so the pool is not
-	// closed underneath a goroutine that is still using it.
+	// Wait for the import before the pool closes.
 	select {
 	case <-importDone:
 	case <-shutdownCtx.Done():
@@ -116,8 +111,6 @@ func run() error {
 	return err
 }
 
-// startImport waits for PostgreSQL, applies the migrations, then imports the
-// data folder. Any failure before the import is reported through the status.
 func startImport(ctx context.Context, log *slog.Logger, cfg config.Config, pool *pgxpool.Pool, svc ingest.Service) {
 	if err := database.WaitReady(ctx, pool, cfg.DatabaseWait); err != nil {
 		log.Error("database unavailable", "error", err)

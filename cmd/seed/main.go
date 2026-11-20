@@ -1,12 +1,4 @@
 // Command seed fills the database from the data folder.
-//
-//	go run ./cmd/seed               # import the four files read at startup
-//	go run ./cmd/seed -follow-up    # then also import laporan_susulan.xlsx
-//
-// It runs the same import as the server does on startup: the schema content
-// is replaced by what the files describe, so it is safe to repeat. Use it to
-// load data without starting the HTTP server, or to bring a database to the
-// state after the follow-up import.
 package main
 
 import (
@@ -59,8 +51,6 @@ func run(followUp bool) error {
 	return seed(ctx, svc, followUp)
 }
 
-// seed runs the initial import and, when asked, the follow-up import. The
-// service logs the outcome of each; this only decides the exit status.
 func seed(ctx context.Context, svc ingest.Service, followUp bool) error {
 	svc.Run(ctx)
 	if svc.Status() != ingest.StatusReady {

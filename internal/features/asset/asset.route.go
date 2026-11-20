@@ -2,7 +2,6 @@ package asset
 
 import "github.com/gin-gonic/gin"
 
-// RegisterRoutes registers the structure endpoints under /api.
 func RegisterRoutes(rg *gin.RouterGroup, h *Handler) {
 	g := rg.Group("/aset")
 	g.GET("", h.List)

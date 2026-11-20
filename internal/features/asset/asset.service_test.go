@@ -109,7 +109,6 @@ func TestPrioritiesValidatesTheLimit(t *testing.T) {
 	_, err := svc.Priorities(context.Background(), -1)
 	assert.ErrorIs(t, err, ErrInvalidLimit)
 
-	// A very large limit is how a client asks for every row.
 	for _, limit := range []int{0, 1, 1000000} {
 		_, err := svc.Priorities(context.Background(), limit)
 		assert.NoError(t, err, "limit %d", limit)

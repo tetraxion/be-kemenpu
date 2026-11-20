@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// StatusProvider is the source of the import status ("memuat" or "siap").
 type StatusProvider interface {
 	Status() string
 }

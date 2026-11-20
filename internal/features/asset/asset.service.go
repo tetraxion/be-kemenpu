@@ -20,11 +20,9 @@ func NewService(repo Repository) Service {
 func normalizeCode(code string) string { return strings.ToUpper(strings.TrimSpace(code)) }
 
 func (s *service) List(ctx context.Context, q ListQuery) ([]Asset, error) {
-	// Filters accept the same spelling variants as the source files, so
-	// "RR" or "Rusak Ringan" both select rusak_ringan.
+	// Filters accept the source spelling variants: "RR" selects rusak_ringan.
 	f := ListFilter{Kind: strings.TrimSpace(q.Kind), Condition: strings.TrimSpace(q.Condition), CanalName: normalize.Clean(q.CanalName)}
-	// An unknown value is rejected instead of answering an empty list, which
-	// would look like "no such structures" when the filter was simply mistyped.
+	// An unknown value is an error, not an empty list.
 	if f.Kind != "" {
 		kind, ok := normalize.AssetKind(f.Kind)
 		if !ok {
@@ -71,15 +69,12 @@ func (s *service) Impact(ctx context.Context, code string) (Impact, error) {
 	return Impact{AssetCode: a.Code, TotalAreaHa: geo.Round(total, 2), Plots: plots}, nil
 }
 
-// Priorities ranks structures by score = condition weight × impacted area.
-// Only scores above 0 are listed; ties are ordered by asset code.
+// Priorities: score = condition weight × impacted area, above 0 only, ties by asset code.
 func (s *service) Priorities(ctx context.Context, limit int) ([]Priority, error) {
 	// 0 means the caller gave no limit.
 	if limit == 0 {
 		limit = DefaultPriorityLimit
 	}
-	// There is no upper bound: a client asking for more rows than exist
-	// simply gets all of them.
 	if limit < 0 {
 		return nil, ErrInvalidLimit
 	}

@@ -12,7 +12,6 @@ import (
 	"irrigation-server/internal/features/ingest"
 )
 
-// stubService records what the seeder asked for.
 type stubService struct {
 	statusAfterRun string
 	followUpErr    error

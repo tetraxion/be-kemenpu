@@ -48,9 +48,6 @@ func TestDocumentationCanBeDisabled(t *testing.T) {
 	}
 }
 
-// TestEveryRouteIsDocumented keeps the specification honest: a route added
-// without swaggo annotations (or without running `make swag`) fails here, and
-// so does a documented route that no longer exists.
 func TestEveryRouteIsDocumented(t *testing.T) {
 	engine := newRouter(config.Config{AppEnv: "production", DocsEnabled: true}, slog.Default(), nil,
 		&stubIngest{status: ingest.StatusReady})
@@ -71,7 +68,7 @@ func TestEveryRouteIsDocumented(t *testing.T) {
 		if !strings.HasPrefix(route.Path, "/api/") {
 			continue // the documentation pages themselves
 		}
-		// Gin writes path parameters as :code; the specification names them after the contract.
+		// Gin writes :code, the specification uses the contract names.
 		registered[route.Method+" "+strings.ReplaceAll(route.Path, ":code", "{kode_aset}")] = true
 	}
 

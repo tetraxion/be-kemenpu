@@ -1,4 +1,4 @@
-// Package canal serves canal segments: the length recap and the map layer.
+// Package canal serves the canal length recap and map layer.
 package canal
 
 import (
@@ -7,7 +7,6 @@ import (
 	"irrigation-server/internal/pkg/geojson"
 )
 
-// Recap is the total canal length of one level and condition.
 type Recap struct {
 	Level     string
 	Condition string
@@ -15,8 +14,6 @@ type Recap struct {
 }
 
 type Repository interface {
-	// Recap sums segment lengths per level and condition. Duplicate segments
-	// were already removed at import time.
 	Recap(ctx context.Context) ([]Recap, error)
 	Features(ctx context.Context) ([]geojson.Feature, error)
 }

@@ -1,10 +1,4 @@
 // Command migrate applies or rolls back the database migrations.
-//
-//	go run ./cmd/migrate            # up
-//	go run ./cmd/migrate -down 1    # roll back the last step
-//
-// The server applies pending migrations by itself on startup; this command
-// is for doing it separately, and for rolling back.
 package main
 
 import (
@@ -35,7 +29,7 @@ func run(down int) error {
 	}
 	slog.SetDefault(logger.New(cfg.AppEnv))
 
-	// The database may still be starting when this runs right after `db-up`.
+	// The database may still be starting right after db-up.
 	ctx := context.Background()
 	pool, err := database.NewPool(ctx, cfg.DatabaseURL)
 	if err != nil {
