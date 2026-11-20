@@ -153,6 +153,12 @@ Every error answers the same envelope, with a stable `code` for clients and a `r
 | 404 | `FOLLOW_UP_FILE_NOT_FOUND` | `laporan_susulan.xlsx` is not in the data folder |
 | 405 | `METHOD_NOT_ALLOWED` | known address, wrong method (e.g. `GET /api/impor/susulan`) |
 | 422 | `FOLLOW_UP_FILE_UNREADABLE` | the follow-up file exists but is not a readable workbook |
+| 400 | `UPLOAD_FILE_MISSING` | an upload without a file in the `berkas` field |
+| 400 | `UPLOAD_FILE_TOO_LARGE` | an uploaded file larger than 10 MB |
+| 422 | `UPLOAD_FILE_UNREADABLE` | the uploaded file is not a readable workbook |
+| 422 | `UPLOAD_FILE_NOT_REPORTS` | the uploaded workbook has no `id_laporan` column |
+
+`POST /api/impor/susulan` reads the data folder when the request has no body, as the contract describes. As an addition outside the contract, a `multipart/form-data` request with an `.xlsx` in the field `berkas` imports that file instead, with the same cleaning rules and the same response.
 | 503 | `IMPORT_IN_PROGRESS` | the initial import has not finished |
 | 503 | `IMPORT_FAILED` | the initial import failed; `GET /api/health` answers `gagal` |
 | 503 | `DATABASE_UNAVAILABLE` | PostgreSQL cannot be reached; retry later |
@@ -194,7 +200,7 @@ Checked against the running service with the sample data.
 
 | # | Requirement | Status |
 | --- | --- | --- |
-| 1 | `docker compose up --build` from the repo root runs everything | **Not met as written.** Backend and frontend are two separate Compose projects by choice, each started from its own folder; there is no compose file at the repo root |
+| 1 | `docker compose up --build` from the repo root runs everything | Done. The `docker-compose.yml` at the repo root includes this project and `../frontend`; both stay separate Compose projects that can also be started from their own folder |
 | 2 | UI on `http://localhost:8080`, API on `/api` | Done once both projects run, through the gateway in `../frontend` |
 | 3 | Reads `./data` on start and imports automatically | Done. `./data` at the repo root is imported when it holds source files; otherwise the copy in `backend/data` is |
 | 4 | `GET /api/health`: `memuat`, then `siap` within 10 minutes | Done (a few seconds) |
