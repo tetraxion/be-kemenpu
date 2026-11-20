@@ -1,4 +1,4 @@
-package ingest
+package datafile
 
 import (
 	"bytes"
@@ -57,7 +57,7 @@ func toRows(table [][]string) []Row {
 func ReadCSV(path string) ([]Row, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("ingest: read %s: %w", path, err)
+		return nil, fmt.Errorf("datafile: read %s: %w", path, err)
 	}
 	content = bytes.TrimPrefix(content, []byte(byteOrderMark))
 	r := csv.NewReader(bytes.NewReader(content))
@@ -68,7 +68,7 @@ func ReadCSV(path string) ([]Row, error) {
 	}
 	table, err := r.ReadAll()
 	if err != nil {
-		return nil, fmt.Errorf("ingest: parse %s: %w", path, err)
+		return nil, fmt.Errorf("datafile: parse %s: %w", path, err)
 	}
 	return toRows(table), nil
 }
@@ -77,7 +77,7 @@ func ReadCSV(path string) ([]Row, error) {
 func ReadXLSX(path string) ([]Row, error) {
 	f, err := excelize.OpenFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("ingest: open %s: %w", path, err)
+		return nil, fmt.Errorf("datafile: open %s: %w", path, err)
 	}
 	defer f.Close()
 	return workbookRows(f, path)
@@ -87,7 +87,7 @@ func ReadXLSX(path string) ([]Row, error) {
 func ReadXLSXFrom(r io.Reader, name string) ([]Row, error) {
 	f, err := excelize.OpenReader(r)
 	if err != nil {
-		return nil, fmt.Errorf("ingest: open %s: %w", name, err)
+		return nil, fmt.Errorf("datafile: open %s: %w", name, err)
 	}
 	defer f.Close()
 	return workbookRows(f, name)
@@ -96,11 +96,11 @@ func ReadXLSXFrom(r io.Reader, name string) ([]Row, error) {
 func workbookRows(f *excelize.File, path string) ([]Row, error) {
 	sheets := f.GetSheetList()
 	if len(sheets) == 0 {
-		return nil, fmt.Errorf("ingest: %s has no sheet", path)
+		return nil, fmt.Errorf("datafile: %s has no sheet", path)
 	}
 	table, err := f.GetRows(sheets[0], excelize.Options{RawCellValue: true})
 	if err != nil {
-		return nil, fmt.Errorf("ingest: parse %s: %w", path, err)
+		return nil, fmt.Errorf("datafile: parse %s: %w", path, err)
 	}
 	return toRows(table), nil
 }
@@ -114,7 +114,7 @@ type Feature struct {
 func ReadGeoJSON(path string) ([]Feature, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("ingest: read %s: %w", path, err)
+		return nil, fmt.Errorf("datafile: read %s: %w", path, err)
 	}
 	var collection struct {
 		Features []struct {
@@ -126,7 +126,7 @@ func ReadGeoJSON(path string) ([]Feature, error) {
 		} `json:"features"`
 	}
 	if err := json.Unmarshal(bytes.TrimPrefix(content, []byte(byteOrderMark)), &collection); err != nil {
-		return nil, fmt.Errorf("ingest: parse %s: %w", path, err)
+		return nil, fmt.Errorf("datafile: parse %s: %w", path, err)
 	}
 	features := make([]Feature, 0, len(collection.Features))
 	for _, f := range collection.Features {

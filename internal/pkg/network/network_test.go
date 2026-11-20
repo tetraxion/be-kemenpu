@@ -1,4 +1,4 @@
-package ingest
+package network
 
 import (
 	"testing"
@@ -7,38 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"irrigation-server/internal/pkg/geo"
+	"irrigation-server/internal/pkg/network/networktest"
 )
 
-// The assignment's example scheme on a local metre grid:
-//
-//	Weir(0,0) - B.KW.1(1000,0) - B.KW.2(2000,0) - B.KW.3(3000,0)        primary
-//	                                 |
-//	                              B.SR.1(2000,-1000) - B.SR.2(2000,-2000)   secondary
-func exampleLines() [][]geo.Point {
-	return [][]geo.Point{
-		{{X: 1000, Y: 0}, {X: 0, Y: 0}},            // drawn against the flow
-		{{X: 1003, Y: 2}, {X: 2000, Y: 0}},         // gap of about 3.6 m
-		{{X: 3000, Y: 0}, {X: 2004, Y: -3}},        // against the flow, gap of 5 m
-		{{X: 1998, Y: -4}, {X: 2000, Y: -1000}},    // secondary branch
-		{{X: 2000, Y: -2000}, {X: 2001, Y: -1006}}, // against the flow
-	}
-}
-
-func examplePoints() map[string]geo.Point {
-	return map[string]geo.Point{
-		"weir":     {X: 2, Y: 3},
-		"B.KW.1":   {X: 1001, Y: 6},
-		"B.KW.2":   {X: 2007, Y: 1}, // surveyed 7 m off, towards the downstream primary branch
-		"B.KW.3":   {X: 2995, Y: -4},
-		"B.SR.1":   {X: 2003, Y: -1002},
-		"B.SR.2":   {X: 1999, Y: -1996},
-		"aqueduct": {X: 1500, Y: 5}, // mid-segment between B.KW.1 and B.KW.2
-	}
-}
-
 func TestDownstreamMatchesTheAssignmentExample(t *testing.T) {
-	network := NewNetwork(exampleLines(), 10, 30)
-	points := examplePoints()
+	network := New(networktest.ExampleLines(), 10, 30)
+	points := networktest.ExamplePoints()
 	require.True(t, network.SetRoot(points["weir"]))
 
 	positions := map[string]Position{}
@@ -71,8 +45,8 @@ func TestDownstreamMatchesTheAssignmentExample(t *testing.T) {
 }
 
 func TestLocateRejectsStructuresOffTheNetwork(t *testing.T) {
-	network := NewNetwork(exampleLines(), 10, 30)
-	points := examplePoints()
+	network := New(networktest.ExampleLines(), 10, 30)
+	points := networktest.ExamplePoints()
 
 	_, ok := network.Locate(points["B.KW.1"], 50)
 	assert.False(t, ok, "without a root there is no flow direction")
@@ -89,7 +63,7 @@ func TestDisconnectedSegmentIsUnreachable(t *testing.T) {
 		{{X: 0, Y: 0}, {X: 1000, Y: 0}},
 		{{X: 1020, Y: 0}, {X: 2000, Y: 0}}, // gap of 20 m: not connected
 	}
-	network := NewNetwork(lines, 10, 30)
+	network := New(lines, 10, 30)
 	network.SetRoot(geo.Point{X: 0, Y: 0})
 
 	_, ok := network.Locate(geo.Point{X: 1500, Y: 0}, 50)
@@ -103,7 +77,7 @@ func TestGapAtTheConnectToleranceStillConnects(t *testing.T) {
 		{{X: 0, Y: 0}, {X: 1000, Y: 0}},
 		{{X: 1010, Y: 0}, {X: 2000, Y: 0}}, // exactly 10 m
 	}
-	network := NewNetwork(lines, 10, 30)
+	network := New(lines, 10, 30)
 	network.SetRoot(geo.Point{X: 0, Y: 0})
 
 	_, ok := network.Locate(geo.Point{X: 1500, Y: 0}, 50)
@@ -116,7 +90,7 @@ func TestBranchFromTheMiddleOfASegment(t *testing.T) {
 		{{X: 0, Y: 0}, {X: 2000, Y: 0}},
 		{{X: 1000, Y: -2}, {X: 1000, Y: -1000}},
 	}
-	network := NewNetwork(lines, 10, 30)
+	network := New(lines, 10, 30)
 	network.SetRoot(geo.Point{X: 0, Y: 0})
 
 	upstream, _ := network.Locate(geo.Point{X: 500, Y: 0}, 50)
@@ -130,7 +104,7 @@ func TestBranchFromTheMiddleOfASegment(t *testing.T) {
 }
 
 func TestWeirInTheMiddleOfASegmentFeedsBothSides(t *testing.T) {
-	network := NewNetwork([][]geo.Point{{{X: 0, Y: 0}, {X: 2000, Y: 0}}}, 10, 30)
+	network := New([][]geo.Point{{{X: 0, Y: 0}, {X: 2000, Y: 0}}}, 10, 30)
 	require.True(t, network.SetRoot(geo.Point{X: 1000, Y: 0}))
 
 	weir, _ := network.Locate(geo.Point{X: 1000, Y: 0}, 50)

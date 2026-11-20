@@ -1,4 +1,4 @@
-package ingest
+package network
 
 import (
 	"math"
@@ -32,8 +32,8 @@ type Position struct {
 	Offset float64
 }
 
-// NewNetwork snaps a structure within junctionTolerance onto the junction, so it keeps the plots of every branch.
-func NewNetwork(lines [][]geo.Point, connectTolerance, junctionTolerance float64) *Network {
+// New snaps a structure within junctionTolerance onto the junction, so it keeps the plots of every branch.
+func New(lines [][]geo.Point, connectTolerance, junctionTolerance float64) *Network {
 	n := &Network{root: -1, connectTolerance: connectTolerance, junctionTolerance: junctionTolerance}
 	var usable [][]geo.Point
 	for _, line := range lines {
