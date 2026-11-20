@@ -20,7 +20,6 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-// fakeRepo keeps what the service asks to store, without a database.
 type fakeRepo struct {
 	snapshot    *Snapshot
 	replaceErr  error
@@ -58,8 +57,7 @@ func (f *fakeRepo) FollowUp(_ context.Context, decide func(Reference, map[string
 
 func quietLog() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
 
-// writeDataDir writes a minimal canal, asset and plot file. The report files
-// are left out on purpose.
+// The report files are left out on purpose.
 func writeDataDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -185,7 +183,6 @@ func TestPolygonRepairsRunConcurrentlyButKeepFileOrder(t *testing.T) {
 	assert.Greater(t, peak.Load(), int32(1), "repairs must overlap")
 	assert.LessOrEqual(t, peak.Load(), int32(repairWorkers), "no more than repairWorkers at a time")
 
-	// Findings are recorded in file order too, so repeated imports produce identical output.
 	var order []string
 	for _, f := range rec.Findings {
 		if f.Category == CategoryImplausibleArea {
@@ -209,7 +206,6 @@ func TestImportFollowUpRejectsAnUnreadableFile(t *testing.T) {
 	assert.NotNil(t, errors.Unwrap(err), "the parser error is kept for the log")
 }
 
-// workbook builds an .xlsx in memory from a header and its rows.
 func workbook(t *testing.T, table ...[]any) *bytes.Buffer {
 	t.Helper()
 	f := excelize.NewFile()
@@ -258,7 +254,6 @@ func TestImportFollowUpFromRejectsOtherFiles(t *testing.T) {
 	assert.ErrorIs(t, err, ErrUploadNotReports, "a workbook without id_laporan is not a report file")
 }
 
-// panickyRepo panics where a real repository would talk to the database.
 type panickyRepo struct {
 	fakeRepo
 	onRepair, onReplace bool

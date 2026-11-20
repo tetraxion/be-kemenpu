@@ -20,7 +20,7 @@ func NewRepository(pool *pgxpool.Pool) Repository {
 
 func (r *repository) RepairPolygon(ctx context.Context, geojson string) (PolygonRepair, error) {
 	var out PolygonRepair
-	// ST_MakeValid can return lines or points for degenerate parts; only the polygons are kept.
+	// ST_MakeValid can return lines or points. Only polygons are kept.
 	err := r.pool.QueryRow(ctx, `
 		WITH source AS (SELECT ST_SetSRID(ST_GeomFromGeoJSON($1::text), 4326) AS g),
 		     fixed AS (SELECT ST_IsValid(g) AS was_valid, ST_Multi(ST_CollectionExtract(ST_MakeValid(g), 3)) AS m FROM source)
@@ -114,8 +114,7 @@ func (r *repository) ReplaceAll(ctx context.Context, snap Snapshot) error {
 
 func (r *repository) FollowUp(ctx context.Context, decide func(ref Reference, existing map[string]Report) FollowUpChange) error {
 	return database.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
-		// Serialise follow-up imports: two concurrent calls must not both see
-		// the same "existing" reports and both count them as added.
+		// Serialise follow-up imports, or concurrent calls count the same reports twice.
 		if _, err := tx.Exec(ctx, `LOCK TABLE irrigation.report IN SHARE ROW EXCLUSIVE MODE`); err != nil {
 			return fmt.Errorf("ingest: lock report: %w", err)
 		}
@@ -133,8 +132,7 @@ func (r *repository) FollowUp(ctx context.Context, decide func(ref Reference, ex
 				return err
 			}
 		}
-		// The file's cleaning findings are replaced as a whole, so repeating
-		// the import does not pile them up.
+		// Findings of the file are replaced as a whole.
 		if _, err := tx.Exec(ctx, `DELETE FROM irrigation.finding WHERE source_file = $1`, change.SourceFile); err != nil {
 			return fmt.Errorf("ingest: delete findings: %w", err)
 		}
@@ -176,12 +174,9 @@ func insertFindings(ctx context.Context, tx pgx.Tx, findings []Finding) error {
 	return nil
 }
 
-// recomputeSteps derive everything that depends on the report table. They run
-// after the initial import and after every follow-up import, so the result
-// depends only on the table content, never on the order of earlier imports.
+// recomputeSteps depend only on the report table, never on import order.
 var recomputeSteps = []string{
-	// Duplicate reports: same asset, date and condition (within the same
-	// status). The smallest id is kept.
+	// Duplicate reports: same asset, date, condition and status. The smallest id is kept.
 	`UPDATE irrigation.report SET is_duplicate = false WHERE is_duplicate`,
 	`UPDATE irrigation.report r SET is_duplicate = true FROM (
 		SELECT id, row_number() OVER (
@@ -189,8 +184,7 @@ var recomputeSteps = []string{
 		FROM irrigation.report
 		WHERE asset_code IS NOT NULL AND reported_on IS NOT NULL AND condition IS NOT NULL) d
 	 WHERE d.id = r.id AND d.position > 1`,
-	// Latest condition: the most recent source between the inventory and the
-	// active reports of the asset. On equal dates the report wins.
+	// Latest condition: newest of inventory and active reports. On equal dates the report wins.
 	`UPDATE irrigation.asset a SET
 		condition = COALESCE(latest.condition, a.inventory_condition),
 		condition_date = COALESCE(latest.reported_on, a.inventory_date)

@@ -14,11 +14,11 @@ const (
 	KindInvalid
 	KindNotFound
 	KindMethodNotAllowed
-	// KindUnprocessable: the request is well-formed but what it refers to cannot be processed (422).
+	// 422
 	KindUnprocessable
-	// KindUnavailable: the service cannot answer right now (503), e.g. the import is still running.
+	// 503
 	KindUnavailable
-	// KindTimeout: the request ran out of time on the server (504).
+	// 504
 	KindTimeout
 )
 
@@ -45,9 +45,7 @@ func (e *Error) Is(target error) bool {
 	return ok && t.Code == e.Code
 }
 
-// Wrap returns a copy that carries the underlying cause. The cause only goes
-// to the log; clients see Code and Message. The original (usually a package
-// variable) is left untouched.
+// Wrap returns a copy. The cause only goes to the log.
 func (e *Error) Wrap(cause error) *Error {
 	c := *e
 	c.Err = cause
@@ -72,8 +70,7 @@ var (
 	errRequestCancelled = Unavailable("REQUEST_CANCELLED", "permintaan dibatalkan sebelum selesai")
 )
 
-// From extracts an *Error from the chain. A request that ran out of time or
-// was cancelled is reported as such; any other error is treated as internal.
+// From maps a deadline or cancellation to a timeout, any other unknown error to internal.
 func From(err error) *Error {
 	var appErr *Error
 	if errors.As(err, &appErr) {

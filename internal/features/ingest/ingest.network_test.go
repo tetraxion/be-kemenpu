@@ -14,8 +14,6 @@ import (
 //	Weir(0,0) - B.KW.1(1000,0) - B.KW.2(2000,0) - B.KW.3(3000,0)        primary
 //	                                 |
 //	                              B.SR.1(2000,-1000) - B.SR.2(2000,-2000)   secondary
-//
-// Segments are deliberately drawn in mixed directions with gaps of a few metres.
 func exampleLines() [][]geo.Point {
 	return [][]geo.Point{
 		{{X: 1000, Y: 0}, {X: 0, Y: 0}},            // drawn against the flow
@@ -50,7 +48,7 @@ func TestDownstreamMatchesTheAssignmentExample(t *testing.T) {
 		positions[name] = pos
 	}
 
-	// want[x] lists the offtakes downstream of x (or x itself).
+	// want[x]: offtakes at or downstream of x
 	offtakes := []string{"B.KW.1", "B.KW.2", "B.KW.3", "B.SR.1", "B.SR.2"}
 	want := map[string][]string{
 		"weir":     offtakes,

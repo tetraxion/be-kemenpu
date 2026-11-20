@@ -15,8 +15,7 @@ func TestLoadRequiresDatabaseURL(t *testing.T) {
 }
 
 func TestLoadDefaults(t *testing.T) {
-	// Clear every variable the test reads a default for: `make test` exports
-	// the developer's .env, which would otherwise leak into the result.
+	// make test exports the developer's .env, so clear the variables first.
 	for _, key := range []string{"APP_ENV", "HTTP_ADDR", "DOCS_ENABLED", "REQUEST_TIMEOUT", "DATABASE_WAIT", "DATA_DIR", "DATA_OVERRIDE_DIR"} {
 		t.Setenv(key, "")
 	}

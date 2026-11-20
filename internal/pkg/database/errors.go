@@ -8,10 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// IsUnavailable reports whether err means PostgreSQL could not be reached or
-// stopped answering: a failed connection, a network error, or a server that
-// is shutting down or out of connections (SQLSTATE class 08, 57P and 53).
-// These are operational conditions a client can retry, not bugs.
+// IsUnavailable reports a failed connection, a network error or SQLSTATE class 08, 57P and 53.
 func IsUnavailable(err error) bool {
 	// A request that hit its own deadline also satisfies net.Error; that is
 	// the request timing out, not the database being down.

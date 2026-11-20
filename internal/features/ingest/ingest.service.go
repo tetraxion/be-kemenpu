@@ -33,10 +33,8 @@ func (s *service) Status() string { return s.status.Load().(string) }
 
 func (s *service) MarkFailed() { s.status.Store(StatusFailed) }
 
-// Run performs the initial import and moves the status to ready or failed.
 func (s *service) Run(ctx context.Context) {
-	// The import runs on its own goroutine, where an unrecovered panic would
-	// take the whole server down. Report it as a failed import instead.
+	// A panic on this goroutine would take the server down.
 	defer func() {
 		if rec := recover(); rec != nil {
 			s.log.ErrorContext(ctx, "initial import panicked", "panic", rec, "stack", string(debug.Stack()))
@@ -52,21 +50,17 @@ func (s *service) Run(ctx context.Context) {
 	s.log.InfoContext(ctx, "initial import finished")
 }
 
-// sources holds the raw content of the four files imported at startup, each
-// with its own read error so one unreadable file does not stop the others.
+// Each file has its own read error, so one unreadable file does not stop the others.
 type sources struct {
 	canals, plots                              []Feature
 	assets, reports                            []Row
 	canalsErr, plotsErr, assetsErr, reportsErr error
 }
 
-// readSources reads and parses the four files concurrently. They are
-// independent of each other; only the cleaning that follows has an order.
 func (s *service) readSources() sources {
 	var src sources
 	path := func(name string) string { return filepath.Join(s.dataDir, name) }
-	// A parser that panics on a malformed file must not crash the server
-	// from a worker goroutine; it becomes that file's read error.
+	// A parser panic becomes that file's read error.
 	guard := func(err *error, read func()) func() {
 		return func() {
 			defer func() {
@@ -90,13 +84,11 @@ func (s *service) importInitial(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Every start imports the data folder from scratch, so the application
-	// always begins from the state described by the files, whatever an earlier
-	// run (including a follow-up import) left in the database.
+	// Every start imports from scratch, whatever an earlier run left in the database.
 	src := s.readSources()
 
 	rec := &Recorder{}
-	// A file that cannot be read is reported and skipped; the rest is still imported.
+	// An unreadable file is reported and skipped.
 	for _, file := range []struct {
 		name string
 		err  error
@@ -107,9 +99,7 @@ func (s *service) importInitial(ctx context.Context) error {
 		}
 	}
 
-	// Cleaning runs in a fixed order because each step needs the one before:
-	// assets are flagged by their distance to the cleaned canals, the analysis
-	// needs canals, assets and plots, and reports are matched to the assets.
+	// Fixed order: assets need the cleaned canals, the analysis needs all three, reports need the assets.
 	var snap Snapshot
 	snap.Canals = CleanCanals(src.canals, rec)
 	snap.Assets = CleanAssets(src.assets, snap.Canals, rec)
@@ -140,7 +130,7 @@ func (s *service) ImportFollowUp(ctx context.Context) (Summary, error) {
 		if errors.Is(err, fs.ErrNotExist) {
 			return Summary{}, ErrFollowUpMissing
 		}
-		// The file is there but cannot be opened (e.g. permissions).
+		// The file exists but cannot be opened.
 		return Summary{}, ErrFollowUpUnreadable.Wrap(err)
 	}
 	rows, err := ReadXLSX(path)
@@ -154,13 +144,12 @@ func (s *service) ImportFollowUpFrom(ctx context.Context, workbook io.Reader) (S
 	if s.Status() != StatusReady {
 		return Summary{}, ErrNotReady
 	}
-	// Parse before taking the lock: a slow upload must not hold up other imports.
+	// Parse before taking the lock, a slow upload must not hold up other imports.
 	rows, err := ReadXLSXFrom(workbook, "uploaded workbook")
 	if err != nil {
 		return Summary{}, ErrUploadUnreadable.Wrap(err)
 	}
-	// Any workbook opens fine, so check that this one is a report file before
-	// its rows are recorded as findings.
+	// Any workbook opens, so check it is a report file first.
 	if len(rows) > 0 && !hasColumn(rows, "id_laporan") {
 		return Summary{}, ErrUploadNotReports
 	}
@@ -178,9 +167,7 @@ func hasColumn(rows []Row, name string) bool {
 	return false
 }
 
-// applyFollowUp cleans and stores follow-up rows. The caller holds s.mu. An
-// uploaded file is recorded under the same source name as the one in the data
-// folder: both are the follow-up file, so repeating either stays idempotent.
+// The caller holds s.mu. An upload is recorded under the same source name as the data folder file.
 func (s *service) applyFollowUp(ctx context.Context, rows []Row) (Summary, error) {
 	var summary Summary
 	err := s.repo.FollowUp(ctx, func(ref Reference, existing map[string]Report) FollowUpChange {

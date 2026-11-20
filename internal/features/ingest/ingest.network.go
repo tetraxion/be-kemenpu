@@ -7,9 +7,7 @@ import (
 	"irrigation-server/internal/pkg/geo"
 )
 
-// The canal network as a directed graph flowing from the weir downstream.
-// A node is a cluster of segment ends that lie close together; an edge is a
-// segment (or a piece of one) between two nodes.
+// The canal network as a directed graph flowing downstream from the weir.
 
 type edge struct {
 	line     []geo.Point
@@ -18,7 +16,6 @@ type edge struct {
 	from, to int // flow direction; -1 when unreachable from the weir
 }
 
-// Network answers one question: does the water path to S pass through X.
 type Network struct {
 	edges             []edge
 	parent            []int // edge flowing into the node; -1 for the root
@@ -28,21 +25,14 @@ type Network struct {
 	junctionTolerance float64
 }
 
-// Position is where a structure sits on the network: exactly on a node
-// (Node >= 0), or inside an edge, Offset metres from its upstream end.
+// Position is on a node when Node >= 0, otherwise Offset metres from the upstream end of an edge.
 type Position struct {
 	Node   int
 	Edge   int
 	Offset float64
 }
 
-// NewNetwork builds the graph from segment lines (EPSG:32749).
-//
-// connectTolerance is the largest gap between two segment ends that still
-// counts as connected. junctionTolerance snaps a structure onto a junction:
-// division structures are surveyed a few metres off the junction they
-// control, and without snapping they would fall on one branch and lose the
-// plots of the other.
+// NewNetwork snaps a structure within junctionTolerance onto the junction, so it keeps the plots of every branch.
 func NewNetwork(lines [][]geo.Point, connectTolerance, junctionTolerance float64) *Network {
 	n := &Network{root: -1, connectTolerance: connectTolerance, junctionTolerance: junctionTolerance}
 	var usable [][]geo.Point
@@ -51,8 +41,7 @@ func NewNetwork(lines [][]geo.Point, connectTolerance, junctionTolerance float64
 			usable = append(usable, line)
 		}
 	}
-	// A segment end that touches the middle of another segment splits that
-	// segment, so every junction becomes a node.
+	// A segment end touching the middle of another splits it, so every junction is a node.
 	for i, line := range usable {
 		var cuts []float64
 		length := geo.Length(line)
@@ -92,7 +81,6 @@ func (n *Network) addEdge(line []geo.Point) {
 	}
 }
 
-// connect clusters every pair of edge ends within connectTolerance into a node.
 func (n *Network) connect() {
 	count := 2 * len(n.edges)
 	cluster := make([]int, count)
@@ -135,7 +123,6 @@ func (n *Network) connect() {
 	n.outgoing = make([]int, len(ids))
 }
 
-// nearest finds the edge closest to p.
 func (n *Network) nearest(p geo.Point) (index int, distance, offset float64) {
 	index, distance = -1, math.Inf(1)
 	for i, e := range n.edges {
@@ -146,9 +133,7 @@ func (n *Network) nearest(p geo.Point) (index int, distance, offset float64) {
 	return
 }
 
-// SetRoot makes the point nearest to p (the weir) the head of the network and
-// directs every edge away from it. The drawn direction of a segment is never
-// used.
+// SetRoot directs every edge away from the weir. The drawn direction is never used.
 func (n *Network) SetRoot(p geo.Point) bool {
 	i, _, offset := n.nearest(p)
 	if i < 0 {
@@ -171,8 +156,6 @@ func (n *Network) SetRoot(p geo.Point) bool {
 	return true
 }
 
-// orient computes the shortest flow distance from the root to every node,
-// then directs each edge from its end nearer the root.
 func (n *Network) orient() {
 	distance := make([]float64, len(n.parent))
 	for i := range distance {
@@ -207,8 +190,7 @@ func (n *Network) orient() {
 	}
 }
 
-// Locate places p on the network. It fails when p is farther than maxDistance
-// from the nearest canal, or when that canal is not connected to the root.
+// Locate fails when p is beyond maxDistance or its canal is not connected to the root.
 func (n *Network) Locate(p geo.Point, maxDistance float64) (Position, bool) {
 	i, d, drawnOffset := n.nearest(p)
 	if i < 0 || d > maxDistance || n.root < 0 || n.edges[i].from < 0 {
@@ -230,7 +212,6 @@ func (n *Network) Locate(p geo.Point, maxDistance float64) (Position, bool) {
 	return Position{Node: -1, Edge: i, Offset: offset}, true
 }
 
-// inSubtree reports whether node is downstream of (or equal to) ancestor.
 func (n *Network) inSubtree(node, ancestor int) bool {
 	for steps := 0; node >= 0 && steps <= len(n.edges); steps++ {
 		if node == ancestor {
@@ -245,8 +226,7 @@ func (n *Network) inSubtree(node, ancestor int) bool {
 	return false
 }
 
-// Downstream reports whether the water path from the root to s passes
-// through x, i.e. s is downstream of x or at the same place.
+// Downstream is also true when s and x are at the same place.
 func (n *Network) Downstream(x, s Position) bool {
 	// The most upstream node that must be passed to reach s.
 	entry := s.Node

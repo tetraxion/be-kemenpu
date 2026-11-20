@@ -1,11 +1,9 @@
-// Package quality serves the data-quality report: how many findings each
-// category has, and the findings themselves.
+// Package quality serves the data-quality report.
 package quality
 
 import "context"
 
-// RequiredCategories must always appear in the summary, even with a count of
-// 0. The names and their order come from the API contract.
+// RequiredCategories always appear in the summary, in contract order, even with a count of 0.
 var RequiredCategories = []string{
 	"koordinat_utm_dikonversi",
 	"koordinat_tertukar_dibetulkan",
@@ -20,13 +18,11 @@ var RequiredCategories = []string{
 	"laporan_tanpa_aset",
 }
 
-// CategoryCount is the number of findings in one category.
 type CategoryCount struct {
 	Category string
 	Count    int
 }
 
-// Finding is one cleaning action taken on one source row or feature.
 type Finding struct {
 	SourceFile string
 	RowRef     string
@@ -37,6 +33,6 @@ type Finding struct {
 
 type Repository interface {
 	Counts(ctx context.Context) (map[string]int, error)
-	// Findings lists findings, limited to one category when it is not empty.
+	// An empty category means all findings.
 	Findings(ctx context.Context, category string) ([]Finding, error)
 }

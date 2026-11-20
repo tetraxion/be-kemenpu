@@ -15,14 +15,13 @@ import (
 // byteOrderMark is the UTF-8 BOM some editors put at the start of a file.
 const byteOrderMark = string(rune(0xFEFF))
 
-// Row is one table row: lower-cased column name -> raw value.
+// Row maps a lower-cased column name to its raw value.
 type Row map[string]string
 
 func columnKey(s string) string {
 	return strings.ToLower(strings.TrimSpace(strings.TrimPrefix(s, byteOrderMark)))
 }
 
-// toRows treats the first non-empty line as the header and skips blank lines.
 func toRows(table [][]string) []Row {
 	var header []string
 	var rows []Row
@@ -74,8 +73,7 @@ func ReadCSV(path string) ([]Row, error) {
 	return toRows(table), nil
 }
 
-// ReadXLSX reads the first sheet. Cells are read raw, so a date-typed cell
-// arrives as its Excel serial number instead of locale-dependent formatted text.
+// ReadXLSX reads cells raw, so a date cell arrives as its Excel serial number.
 func ReadXLSX(path string) ([]Row, error) {
 	f, err := excelize.OpenFile(path)
 	if err != nil {
@@ -85,8 +83,7 @@ func ReadXLSX(path string) ([]Row, error) {
 	return workbookRows(f, path)
 }
 
-// ReadXLSXFrom reads the first sheet of a workbook that is not on disk, such
-// as an uploaded file. name only labels the error.
+// ReadXLSXFrom uses name only to label the error.
 func ReadXLSXFrom(r io.Reader, name string) ([]Row, error) {
 	f, err := excelize.OpenReader(r)
 	if err != nil {
@@ -108,14 +105,12 @@ func workbookRows(f *excelize.File, path string) ([]Row, error) {
 	return toRows(table), nil
 }
 
-// Feature is one GeoJSON feature.
 type Feature struct {
 	Properties   map[string]any
 	GeometryType string
 	Coordinates  json.RawMessage
 }
 
-// ReadGeoJSON reads a FeatureCollection.
 func ReadGeoJSON(path string) ([]Feature, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {

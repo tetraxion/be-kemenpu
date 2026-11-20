@@ -11,10 +11,8 @@ import (
 	"irrigation-server/internal/pkg/normalize"
 )
 
-// PolygonRepairer validates one WGS84 polygon and repairs it when needed.
 type PolygonRepairer func(geojson string) (PolygonRepair, error)
 
-// parsePolygons repairs coordinates and closes rings that the source left open.
 func parsePolygons(f Feature) (polygons [][][]geo.LonLat, fromUTM, swapped, closed, ok bool) {
 	var raw [][][][]float64
 	switch f.GeometryType {
@@ -54,20 +52,15 @@ func parsePolygons(f Feature) (polygons [][][]geo.LonLat, fromUTM, swapped, clos
 	return polygons, fromUTM, swapped, closed, len(polygons) > 0
 }
 
-// repairWorkers bounds how many polygons are validated in PostGIS at once.
-// It stays below the default pgx pool size so the import never queues on its
-// own connections.
+// Below the default pgx pool size, so the import never queues on its own connections.
 const repairWorkers = 4
 
-// plotGeometry is the parsed and validated geometry of one plot feature.
 type plotGeometry struct {
 	fromUTM, swapped, closed, ok bool
 	rings                        [][]geo.Point
 	repair                       PolygonRepair
 }
 
-// preparePlotGeometry parses one feature and has PostGIS validate it. It
-// touches nothing shared, so many of them can run at the same time.
 func preparePlotGeometry(f Feature, repair PolygonRepairer) plotGeometry {
 	var g plotGeometry
 	var polygons [][][]geo.LonLat
@@ -93,10 +86,7 @@ func preparePlotGeometry(f Feature, repair PolygonRepairer) plotGeometry {
 	return g
 }
 
-// preparePlotGeometries validates every polygon concurrently. Each plot is
-// one independent round trip to PostGIS, which is the slow part of the plot
-// import. Results are written by index, so the output order is the file order
-// no matter which goroutine finishes first.
+// Results are written by index, so the output keeps file order.
 func preparePlotGeometries(features []Feature, repair PolygonRepairer) []plotGeometry {
 	geometries := make([]plotGeometry, len(features))
 	slots := make(chan struct{}, repairWorkers)
@@ -105,8 +95,7 @@ func preparePlotGeometries(features []Feature, repair PolygonRepairer) []plotGeo
 		wg.Go(func() {
 			slots <- struct{}{}
 			defer func() { <-slots }()
-			// A panic in a worker would crash the server. The zero value
-			// left behind marks the plot as having no usable geometry.
+			// A worker panic leaves the zero value: no usable geometry.
 			defer func() {
 				if rec := recover(); rec != nil {
 					geometries[i] = plotGeometry{}
@@ -119,12 +108,7 @@ func preparePlotGeometries(features []Feature, repair PolygonRepairer) []plotGeo
 	return geometries
 }
 
-// CleanPlots repairs coordinates and geometry, corrects the unit of
-// luas_baku, flags implausible areas, and drops repeated kode_petak.
-//
-// Geometry is validated concurrently first; the rules are then applied in
-// file order on one goroutine, because "keep the first of a repeated code"
-// and the order of the findings both depend on that order.
+// CleanPlots applies the rules in file order: the first of a repeated kode_petak is kept.
 func CleanPlots(features []Feature, repair PolygonRepairer, rec *Recorder) []*Plot {
 	geometries := preparePlotGeometries(features, repair)
 
@@ -178,8 +162,7 @@ func cleanPlotArea(p *Plot, rawArea any, rowRef string, rec *Recorder) {
 	}
 	hasArea = hasArea && area > 0
 	if hasArea {
-		// The unit is not stated per row. The geometry decides: the value is
-		// in m² when value/10000 is closer to the geometry area than the value.
+		// Unit not stated per row: m² when value/10000 is closer to the geometry area.
 		inSquareMetres := area > 10000
 		if p.GeometryAreaHa > 0 {
 			inSquareMetres = math.Abs(math.Log(area/10000/p.GeometryAreaHa)) < math.Abs(math.Log(area/p.GeometryAreaHa))

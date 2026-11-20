@@ -11,19 +11,17 @@ import (
 type Config struct {
 	AppEnv   string
 	HTTPAddr string
-	// DocsEnabled serves Swagger UI (/swagger/index.html) and Scalar (/scalar).
+	// DocsEnabled serves Swagger UI and Scalar.
 	DocsEnabled     bool
 	ShutdownTimeout time.Duration
 	// RequestTimeout bounds one HTTP request, including its database queries.
 	RequestTimeout time.Duration
 	DatabaseURL    string
-	// DataDir is the folder holding the five source files that ship with the
-	// service. It is imported when the server starts.
+	// DataDir holds the five source files that ship with the service.
 	DataDir string
-	// DataOverrideDir is data/ at the repo root, where the assignment's checker
-	// puts its own data set. When it holds source files it replaces DataDir.
+	// DataOverrideDir replaces DataDir when it holds source files.
 	DataOverrideDir string
-	// DatabaseWait bounds how long startup waits for PostgreSQL to accept connections.
+	// DatabaseWait bounds how long startup waits for PostgreSQL.
 	DatabaseWait time.Duration
 }
 

@@ -17,11 +17,7 @@ import (
 	"irrigation-server/internal/pkg/geo"
 )
 
-// These tests need a PostgreSQL with PostGIS:
-//
-//	TEST_DATABASE_URL=postgres://... go test -tags integration -p 1 ./...
-//
-// They own the irrigation schema of that database and rewrite its content.
+// Needs TEST_DATABASE_URL pointing at PostGIS. The tests rewrite its irrigation schema.
 
 func testPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
@@ -36,8 +32,7 @@ func testPool(t *testing.T) *pgxpool.Pool {
 	return pool
 }
 
-// stateHash fingerprints everything the API can show. Finding ids are left
-// out: findings are re-inserted on each import and only their content matters.
+// Finding ids are left out, findings are re-inserted on each import.
 func stateHash(t *testing.T, pool *pgxpool.Pool) string {
 	t.Helper()
 	var hash string
@@ -79,7 +74,7 @@ func TestRepairPolygon(t *testing.T) {
 	assert.InDelta(t, 409600, square.AreaM2, 1, "area is measured on EPSG:32749")
 	assert.NotEmpty(t, square.GeomHex)
 
-	// A bow-tie crosses itself at its centre; made valid it is two triangles.
+	// A bow-tie made valid is two triangles.
 	bowtie, err := repo.RepairPolygon(ctx, ring([2]float64{0, 0}, [2]float64{640, 640}, [2]float64{640, 0}, [2]float64{0, 640}, [2]float64{0, 0}))
 	require.NoError(t, err)
 	assert.False(t, bowtie.WasValid)
@@ -217,9 +212,7 @@ func TestLatestConditionAndDuplicateRules(t *testing.T) {
 	})
 }
 
-// TestSampleDataEndToEnd imports the real data folder through the service.
-// It asserts properties that hold for any data set with the same file names,
-// not numbers that belong to the sample.
+// Asserts properties that hold for any data set, not numbers from the sample.
 func TestSampleDataEndToEnd(t *testing.T) {
 	dataDir := os.Getenv("TEST_DATA_DIR")
 	if dataDir == "" {

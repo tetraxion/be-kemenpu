@@ -8,9 +8,7 @@ import (
 	"irrigation-server/internal/pkg/normalize"
 )
 
-// CleanReports normalises reports and matches each one to a structure: by
-// nomenclature first, then by the nearest structure within 30 m. When an
-// id_laporan repeats inside one file, the last row wins.
+// CleanReports matches by nomenclature, then the nearest structure within 30 m. A repeated id_laporan keeps the last row.
 func CleanReports(rows []Row, sourceFile string, ref Reference, rec *Recorder) []Report {
 	position := map[string]int{}
 	var reports []Report
@@ -72,9 +70,7 @@ func CleanReports(rows []Row, sourceFile string, ref Reference, rec *Recorder) [
 	return reports
 }
 
-// ClassifyFollowUp compares follow-up reports with the stored ones. A report
-// whose content is unchanged is not written again, which is what makes a
-// repeated import a no-op.
+// ClassifyFollowUp skips unchanged reports, so a repeated import is a no-op.
 func ClassifyFollowUp(incoming []Report, existing map[string]Report) (Summary, []Report) {
 	var summary Summary
 	var upserts []Report

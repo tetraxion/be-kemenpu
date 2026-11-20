@@ -14,8 +14,7 @@ func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-// Summary lists the required categories first, in contract order and with a
-// count of 0 when nothing was found, followed by any extra category by name.
+// Summary lists the required categories first in contract order, then extras by name.
 func (s *service) Summary(ctx context.Context) ([]CategoryCount, error) {
 	counts, err := s.repo.Counts(ctx)
 	if err != nil {
