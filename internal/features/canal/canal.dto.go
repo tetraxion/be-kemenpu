@@ -7,8 +7,6 @@ import (
 	"irrigation-server/internal/pkg/geojson"
 )
 
-// ---- response ----
-
 // RecapResponse uses the property names fixed by the API contract.
 type RecapResponse struct {
 	Level     string  `json:"tingkat" enums:"primer,sekunder" example:"sekunder"`

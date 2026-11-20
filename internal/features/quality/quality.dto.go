@@ -2,13 +2,9 @@ package quality
 
 import "context"
 
-// ---- request ----
-
 type FindingQuery struct {
 	Category string `form:"kategori"`
 }
-
-// ---- response ----
 
 // CategoryCountResponse uses the property names fixed by the API contract.
 type CategoryCountResponse struct {

@@ -8,8 +8,6 @@ import (
 
 // The JSON property names below are fixed by the API contract of the assignment.
 
-// ---- request ----
-
 type ListQuery struct {
 	Kind      string `form:"jenis"`
 	Condition string `form:"kondisi"`
@@ -19,8 +17,6 @@ type ListQuery struct {
 type PriorityQuery struct {
 	Limit int `form:"limit"`
 }
-
-// ---- response ----
 
 type AssetResponse struct {
 	Code          string   `json:"kode_aset" example:"KW-0012"`

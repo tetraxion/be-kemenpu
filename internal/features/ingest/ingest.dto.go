@@ -5,8 +5,6 @@ import (
 	"io"
 )
 
-// ---- response ----
-
 type FollowUpResponse struct {
 	Added     int `json:"ditambah" example:"14"`
 	Updated   int `json:"diubah" example:"6"`
