@@ -4,7 +4,7 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "Combines the asset inventory, field reports and network map of an irrigation area into one picture of network condition, to help set maintenance priorities.",
+        "description": "Menggabungkan inventaris aset, laporan lapangan, dan peta jaringan irigasi menjadi satu gambaran kondisi jaringan, untuk membantu menentukan prioritas pemeliharaan.\n\n## Cara memakai dokumentasi ini\n\n1. Buka `GET /api/health` lebih dulu. Selama jawabannya `{\"status\":\"memuat\"}`, alamat lain menjawab 503. Lanjutkan setelah `{\"status\":\"siap\"}`.\n2. Pilih alamat di menu kiri, lalu klik **Test Request**.\n3. Isi parameter yang bertanda **Required**, misalnya `kode_aset` dengan `KW-0001`. Daftar kode ada di `GET /api/aset`.\n4. Filter bersifat opsional. Hapus centang filter yang tidak dipakai. Filter yang dicentang digabung dengan \"dan\", jadi `jenis=bendung` bersama `kondisi=baik` bisa memberi daftar kosong.\n5. Klik **Send**. Jawaban asli muncul di panel kanan.\n\nKotak contoh di samping tiap alamat hanya menunjukkan bentuk jawaban. Nilainya contoh dari soal, bukan isi data.\n\n## Contoh permintaan\n\n| Tujuan | Permintaan |\n| --- | --- |\n| Status impor | `GET /api/health` |\n| Semua bangunan | `GET /api/aset` |\n| Bangunan rusak berat | `GET /api/aset?kondisi=rusak_berat` |\n| Satu bangunan dan riwayat laporannya | `GET /api/aset/KW-0001` |\n| Petak terdampak di hilir bangunan | `GET /api/aset/KW-0001/dampak` |\n| Sepuluh prioritas teratas | `GET /api/prioritas?limit=10` |\n| Panjang saluran per tingkat dan kondisi | `GET /api/rekap/saluran` |\n| Jumlah temuan per kategori | `GET /api/kualitas-data` |\n| Impor laporan susulan dari folder data | `POST /api/impor/susulan` tanpa isi |\n\nDari terminal: `curl http://localhost:8080/api/aset/KW-0001`\n\n## Bila terjadi galat\n\nSemua galat berbentuk `{\"error\": {\"code\": \"...\", \"message\": \"...\", \"request_id\": \"...\"}}`. Status 400 berarti parameter salah, 404 data tidak ada, 503 impor belum selesai.",
         "title": "Irrigation Network Condition API",
         "contact": {},
         "version": "1.0.0"
@@ -89,6 +89,7 @@
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "KW-0001",
                         "description": "Asset code, e.g. KW-0012",
                         "name": "kode_aset",
                         "in": "path",
@@ -130,6 +131,7 @@
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "KW-0001",
                         "description": "Asset code, e.g. KW-0012",
                         "name": "kode_aset",
                         "in": "path",

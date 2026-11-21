@@ -46,7 +46,7 @@ func (h *Handler) List(c *gin.Context) {
 //	@Description	`riwayat` holds every report matched to the structure, newest first, cancelled ones included. Reports dropped as duplicates are left out.
 //	@Tags			assets
 //	@Produce		json
-//	@Param			kode_aset	path		string	true	"Asset code, e.g. KW-0012"
+//	@Param			kode_aset	path		string	true	"Asset code, e.g. KW-0012"	example(KW-0001)
 //	@Success		200			{object}	DetailResponse
 //	@Failure		404			{object}	response.ErrorEnvelope
 //	@Failure		503			{object}	response.ErrorEnvelope	"The initial import has not finished"
@@ -66,7 +66,7 @@ func (h *Handler) Get(c *gin.Context) {
 //	@Description	The tertiary plots that lose water when the structure fails: every plot whose water path from the weir passes through it, including plots tapped at the structure itself. A structure without geometry or flagged `jauh_dari_saluran` has an impacted area of 0.
 //	@Tags			assets
 //	@Produce		json
-//	@Param			kode_aset	path		string	true	"Asset code, e.g. KW-0012"
+//	@Param			kode_aset	path		string	true	"Asset code, e.g. KW-0012"	example(KW-0001)
 //	@Success		200			{object}	ImpactResponse
 //	@Failure		404			{object}	response.ErrorEnvelope
 //	@Failure		503			{object}	response.ErrorEnvelope	"The initial import has not finished"
